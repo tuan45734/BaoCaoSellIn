@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
     updateAll();
 });
 
-// Parse date từ string d/m/yyyy - ĐƯA LÊN ĐẦU
+// Parse date từ string d/m/yyyy
 function parseDate(dateStr) {
     if (!dateStr) return null;
     const parts = dateStr.split('/');
@@ -37,13 +37,40 @@ function formatNumber(num) {
     return new Intl.NumberFormat('vi-VN').format(num);
 }
 
-// Khởi tạo date pickers
+// Khởi tạo date pickers với tiếng Việt
 function initializeDatePickers() {
+    // Cấu hình tiếng Việt cho flatpickr
+    flatpickr.localize({
+        weekdays: {
+            shorthand: ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'],
+            longhand: ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy']
+        },
+        months: {
+            shorthand: ['Th1', 'Th2', 'Th3', 'Th4', 'Th5', 'Th6', 'Th7', 'Th8', 'Th9', 'Th10', 'Th11', 'Th12'],
+            longhand: ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12']
+        },
+        firstDayOfWeek: 1,
+        ordinal: function(nth) {
+            return '';
+        },
+        rangeSeparator: ' đến ',
+        weekAbbreviation: 'Tuần',
+        scrollTitle: 'Cuộn để tăng',
+        toggleTitle: 'Nhấn để chuyển',
+        amPM: ['SA', 'CH'],
+        yearAriaLabel: 'Năm'
+    });
+
     flatpickr(".datepicker", {
         dateFormat: "d/m/Y",
+        locale: 'vn', // Sử dụng locale tiếng Việt
         onChange: function() {
             applyFilters();
-        }
+        },
+        // Thêm các tùy chọn tiếng Việt
+        prevArrow: '<i class="fas fa-chevron-left"></i>',
+        nextArrow: '<i class="fas fa-chevron-right"></i>',
+        placeholder: 'dd/mm/yyyy'
     });
 }
 

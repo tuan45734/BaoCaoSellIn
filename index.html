@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phân Tích Doanh Số Bán Hàng</title>
+   <!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Chart.js Data Labels Plugin -->
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <!-- Flatpickr for date picker -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-chart-line"></i> Phân Tích Doanh Số Bán Hàng</h1>
+            <p>Thống kê chi tiết theo miền, khu vực, tỉnh và nhà phân phối</p>
+        </div>
+
+        <!-- Chỉ giữ lại bộ lọc ngày -->
+        <div class="filter-section">
+            <div class="filter-group">
+                <label><i class="fas fa-calendar"></i> Từ ngày</label>
+                <input type="text" id="startDate" class="datepicker" placeholder="Chọn ngày bắt đầu">
+            </div>
+            <div class="filter-group">
+                <label><i class="fas fa-calendar"></i> Đến ngày</label>
+                <input type="text" id="endDate" class="datepicker" placeholder="Chọn ngày kết thúc">
+            </div>
+        </div>
+
+        <div class="tab-buttons">
+            <button class="tab-btn active" onclick="switchTab('overview')">Tổng quan</button>
+            <button class="tab-btn" onclick="switchTab('byRegion')">Theo miền</button>
+            <button class="tab-btn" onclick="switchTab('byArea')">Theo khu vực</button>
+            <button class="tab-btn" onclick="switchTab('byProvince')">Theo tỉnh</button>
+            <button class="tab-btn" onclick="switchTab('byNPP')">Theo NPP</button>
+        </div>
+
+        <!-- Tab Tổng quan -->
+        <div id="overview" class="tab-content active">
+            <div class="stats-grid" id="overviewStats"></div>
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <h3><i class="fas fa-chart-pie"></i> Doanh số theo miền</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="pieChartMien"></canvas>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <h3><i class="fas fa-chart-bar"></i> Doanh số theo khu vực</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="barChartKV"></canvas>
+                    </div>
+                </div>
+                <div class="chart-container full-width-chart">
+                    <h3><i class="fas fa-chart-line"></i> Xu hướng doanh số theo ngày</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="lineChartDaily"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Theo miền -->
+        <div id="byRegion" class="tab-content">
+            <div class="charts-grid">
+                <div class="chart-container full-width-chart">
+                    <h3><i class="fas fa-chart-bar"></i> Doanh số chi tiết theo miền</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="barChartMienDetail"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="data-table" id="regionTable"></div>
+        </div>
+
+        <!-- Tab Theo khu vực -->
+        <div id="byArea" class="tab-content">
+            <div class="charts-grid">
+                <div class="chart-container full-width-chart">
+                    <h3><i class="fas fa-chart-bar"></i> Doanh số chi tiết theo khu vực</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="barChartKVDetail"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="data-table" id="areaTable"></div>
+        </div>
+
+        <!-- Tab Theo tỉnh -->
+        <div id="byProvince" class="tab-content">
+            <div class="charts-grid">
+                <div class="chart-container full-width-chart">
+                    <h3><i class="fas fa-chart-bar"></i> Top 20 tỉnh có doanh số cao nhất</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="barChartProvinceTop"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="data-table" id="provinceTable"></div>
+        </div>
+
+        <!-- Tab Theo NPP -->
+        <div id="byNPP" class="tab-content">
+            <div class="charts-grid">
+                <div class="chart-container full-width-chart">
+                    <h3><i class="fas fa-chart-bar"></i> Top 20 NPP có doanh số cao nhất</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="barChartNPPTop"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="data-table" id="nppTable"></div>
+        </div>
+
+        <!-- Bảng dữ liệu tổng hợp -->
+        <div class="data-table">
+            <h3><i class="fas fa-table"></i> Dữ liệu chi tiết (Sắp xếp theo NPP)</h3>
+            <div style="overflow-x: auto; max-height: 500px;">
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>Miền</th>
+                            <th>Khu vực</th>
+                            <th>Tỉnh</th>
+                            <th>NPP</th>
+                            <th>Doanh số bán</th>
+                            <th>Chiết khấu</th>
+                            <th>Doanh thu thuần</th>
+                            <th>Ngày</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data file - Bạn có thể thêm data vào đây -->
+    <script src="data.js"></script>
+    <!-- Main JavaScript -->
+    <script src="script.js"></script>
+</body>
+</html>

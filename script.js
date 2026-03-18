@@ -1,45 +1,64 @@
-// Biến toàn cục
+// script.js
 let charts = {};
 let filteredData = [];
-
-// Khởi tạo
-document.addEventListener('DOMContentLoaded', function() {
+let provinceFilter = {
+    mien: '',
+    khuVuc: ''
+};
+let nppFilter = {
+    mien: '',
+    khuVuc: '',
+    tinh: ''
+};
+document.addEventListener('DOMContentLoaded', function () {
     initializeDatePickers();
     filteredData = [...salesData];
+    initializeProvinceFilters();
     updateAll();
 });
 
-// Parse date từ string d/m/yyyy
 function parseDate(dateStr) {
     if (!dateStr) return null;
     const parts = dateStr.split('/');
     return new Date(parts[2], parts[1] - 1, parts[0]);
 }
 
-// Format số tiền - Tự động chuyển sang tỷ khi >= 1000 triệu
 function formatMoney(amount) {
     if (amount >= 1000000000) {
-        // Chuyển sang tỷ, làm tròn 1 số thập phân
         const ty = amount / 1000000000;
-        return ty.toFixed(1).replace('.', ',') + ' tỷ';
+        const tyStr = ty.toString();
+        const decimalIndex = tyStr.indexOf('.');
+        if (decimalIndex === -1) {
+            return tyStr + ',0 tỷ';
+        } else {
+            const firstDecimal = tyStr.substring(0, decimalIndex + 2);
+            return firstDecimal.replace('.', ',') + ' tỷ';
+        }
     } else if (amount >= 1000000) {
-        // Chuyển sang triệu, làm tròn 1 số thập phân
         const trieu = amount / 1000000;
-        return trieu.toFixed(1).replace('.', ',') + ' tr';
+        const trieuStr = trieu.toString();
+        const decimalIndex = trieuStr.indexOf('.');
+        if (decimalIndex === -1) {
+            return trieuStr + ',0 tr';
+        } else {
+            const firstDecimal = trieuStr.substring(0, decimalIndex + 2);
+            return firstDecimal.replace('.', ',') + ' tr';
+        }
     } else {
-        // Dưới triệu thì giữ nguyên
         return new Intl.NumberFormat('vi-VN').format(amount) + ' đ';
     }
 }
 
-// Format số
+// Hàm format số đầy đủ cho bảng
+function formatFullNumber(amount) {
+    if (amount === null || amount === undefined || amount === '') return '0 đ';
+    return new Intl.NumberFormat('vi-VN').format(amount) + ' đ';
+}
 function formatNumber(num) {
     return new Intl.NumberFormat('vi-VN').format(num);
 }
 
-// Khởi tạo date pickers với tiếng Việt
 function initializeDatePickers() {
-    // Cấu hình tiếng Việt cho flatpickr
     flatpickr.localize({
         weekdays: {
             shorthand: ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'],
@@ -50,9 +69,6 @@ function initializeDatePickers() {
             longhand: ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12']
         },
         firstDayOfWeek: 1,
-        ordinal: function(nth) {
-            return '';
-        },
         rangeSeparator: ' đến ',
         weekAbbreviation: 'Tuần',
         scrollTitle: 'Cuộn để tăng',
@@ -63,24 +79,21 @@ function initializeDatePickers() {
 
     flatpickr(".datepicker", {
         dateFormat: "d/m/Y",
-        locale: 'vn', // Sử dụng locale tiếng Việt
-        onChange: function() {
+        locale: 'vn',
+        onChange: function () {
             applyFilters();
         },
-        // Thêm các tùy chọn tiếng Việt
         prevArrow: '<i class="fas fa-chevron-left"></i>',
         nextArrow: '<i class="fas fa-chevron-right"></i>',
         placeholder: 'dd/mm/yyyy'
     });
 }
 
-// Áp dụng filters (chỉ theo ngày)
 function applyFilters() {
     const startDate = document.getElementById('startDate').value;
     const endDate = document.getElementById('endDate').value;
 
     filteredData = salesData.filter(item => {
-        // Lọc theo ngày
         if (startDate && endDate) {
             const itemDate = parseDate(item.ngay);
             const start = parseDate(startDate);
@@ -93,15 +106,12 @@ function applyFilters() {
     updateAll();
 }
 
-// Cập nhật tất cả
 function updateAll() {
     updateStats();
     updateCharts();
     updateTables();
-    updateDataTable();
 }
 
-// Cập nhật thống kê
 function updateStats() {
     const totalRevenue = filteredData.reduce((sum, item) => sum + (item.doanhThuThuan || 0), 0);
     const totalSales = filteredData.reduce((sum, item) => sum + (item.doanhSoBan || 0), 0);
@@ -141,28 +151,123 @@ function updateStats() {
     `;
 }
 
-// Cập nhật charts
 function updateCharts() {
-    // Xóa charts cũ
     Object.values(charts).forEach(chart => {
         if (chart) chart.destroy();
     });
-    
+
     updatePieChartMien();
     updateBarChartKV();
     updateLineChartDaily();
     updateBarChartMienDetail();
     updateBarChartKVDetail();
-    updateBarChartProvinceTop();
-    updateBarChartNPPTop();
+    updateBarChartProvince();
+    updateBarChartNPPTop(); // Sẽ dùng filter hiện tại
+}
+function updateBarChartKVDetail() {
+    const ctx = document.getElementById('barChartKVDetail').getContext('2d');
+    const kvData = {};
+    
+    filteredData.forEach(item => {
+        const kv = item.maKhuVuc;
+        kvData[kv] = (kvData[kv] || 0) + (item.doanhThuThuan || 0);
+    });
+
+    charts.barKVDetail = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(kvData),
+            datasets: [{
+                label: 'Doanh thu thuần',
+                data: Object.values(kvData),
+                backgroundColor: '#ff7300'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                datalabels: {
+                    display: true,
+                    anchor: 'end',
+                    align: 'top',
+                    offset: 4,
+                    formatter: (value) => {
+                        if (value >= 1000000000) {
+                            const ty = value / 1000000000;
+                            const rounded = Math.round(ty * 10) / 10;
+                            return rounded.toString().replace('.', ',') + ' tỷ';
+                        } else {
+                            const trieu = value / 1000000;
+                            const rounded = Math.round(trieu * 10) / 10;
+                            return rounded.toString().replace('.', ',') + ' tr';
+                        }
+                    },
+                    color: '#333',
+                    font: {
+                        weight: 'bold',
+                        size: 14
+                    },
+                    rotation: 0
+                },
+                legend: {
+                    labels: {
+                        font: {
+                            size: 13
+                        }
+                    }
+                },
+                tooltip: {
+                    bodyFont: {
+                        size: 13
+                    },
+                    titleFont: {
+                        size: 13
+                    },
+                    callbacks: {
+                        label: function(context) {
+                            return formatMoney(context.raw);
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            if (value >= 1000000000) {
+                                return (value / 1000000000).toFixed(1).replace('.', ',') + ' tỷ';
+                            } else if (value >= 1000000) {
+                                return (value / 1000000).toFixed(1).replace('.', ',') + ' tr';
+                            } else {
+                                return value;
+                            }
+                        },
+                        font: {
+                            size: 13
+                        }
+                    }
+                },
+                x: {
+                    ticks: {
+                        maxRotation: 30,
+                        minRotation: 30,
+                        font: {
+                            size: 13
+                        }
+                    }
+                }
+            }
+        },
+        plugins: [ChartDataLabels]
+    });
 }
 
-// Pie chart theo miền
 function updatePieChartMien() {
     const ctx = document.getElementById('pieChartMien').getContext('2d');
-    
-    // Group by miền
     const mienData = {};
+
     filteredData.forEach(item => {
         const mien = item.mien;
         mienData[mien] = (mienData[mien] || 0) + (item.doanhThuThuan || 0);
@@ -174,14 +279,7 @@ function updatePieChartMien() {
             labels: Object.keys(mienData),
             datasets: [{
                 data: Object.values(mienData),
-                backgroundColor: [
-                    '#667eea',
-                    '#ff7300',
-                    '#b10000',
-                    '#4ecdc4',
-                    '#45b7d1',
-                    '#96ceb4'
-                ]
+                backgroundColor: ['#667eea', '#ff7300', '#b10000', '#4ecdc4', '#45b7d1', '#96ceb4']
             }]
         },
         options: {
@@ -196,14 +294,11 @@ function updatePieChartMien() {
                         return percentage + '%';
                     },
                     color: 'white',
-                    font: {
-                        weight: 'bold',
-                        size: 14
-                    }
+                    font: { weight: 'bold', size: 14 }
                 },
                 tooltip: {
                     callbacks: {
-                        label: function(context) {
+                        label: function (context) {
                             let label = context.label || '';
                             let value = context.raw || 0;
                             let total = context.dataset.data.reduce((a, b) => a + b, 0);
@@ -218,12 +313,10 @@ function updatePieChartMien() {
     });
 }
 
-// Bar chart theo khu vực
 function updateBarChartKV() {
     const ctx = document.getElementById('barChartKV').getContext('2d');
-    
-    // Group by khu vực
     const kvData = {};
+
     filteredData.forEach(item => {
         const kv = item.maKhuVuc;
         kvData[kv] = (kvData[kv] || 0) + (item.doanhThuThuan || 0);
@@ -255,15 +348,12 @@ function updateBarChartKV() {
                         }
                     },
                     color: '#333',
-                    font: {
-                        weight: 'bold',
-                        size: 11
-                    },
+                    font: { weight: 'bold', size: 11 },
                     rotation: -45
                 },
                 tooltip: {
                     callbacks: {
-                        label: function(context) {
+                        label: function (context) {
                             return formatMoney(context.raw);
                         }
                     }
@@ -273,7 +363,7 @@ function updateBarChartKV() {
                 y: {
                     beginAtZero: true,
                     ticks: {
-                        callback: function(value) {
+                        callback: function (value) {
                             return formatMoney(value);
                         }
                     }
@@ -284,18 +374,15 @@ function updateBarChartKV() {
     });
 }
 
-// Line chart theo ngày
 function updateLineChartDaily() {
     const ctx = document.getElementById('lineChartDaily').getContext('2d');
-    
-    // Group by ngày
     const dailyData = {};
+    
     filteredData.forEach(item => {
         const date = item.ngay;
         dailyData[date] = (dailyData[date] || 0) + (item.doanhThuThuan || 0);
     });
 
-    // Sort by date
     const sortedDates = Object.keys(dailyData).sort((a, b) => {
         return parseDate(a) - parseDate(b);
     });
@@ -323,18 +410,36 @@ function updateLineChartDaily() {
                     offset: 10,
                     formatter: (value) => {
                         if (value >= 1000000000) {
-                            return (value / 1000000000).toFixed(1).replace('.', ',') + ' tỷ';
+                            const ty = value / 1000000000;
+                            const rounded = Math.round(ty * 10) / 10;
+                            return rounded.toString().replace('.', ',') + ' tỷ';
                         } else {
-                            return (value / 1000000).toFixed(1).replace('.', ',') + ' tr';
+                            const trieu = value / 1000000;
+                            const rounded = Math.round(trieu * 10) / 10;
+                            return rounded.toString().replace('.', ',') + ' tr';
                         }
                     },
                     color: '#667eea',
                     font: {
                         weight: 'bold',
-                        size: 11
+                        size: 13
+                    },
+                    rotation: 0
+                },
+                legend: {
+                    labels: {
+                        font: {
+                            size: 13
+                        }
                     }
                 },
                 tooltip: {
+                    bodyFont: {
+                        size: 13
+                    },
+                    titleFont: {
+                        size: 13
+                    },
                     callbacks: {
                         label: function(context) {
                             return formatMoney(context.raw);
@@ -347,7 +452,25 @@ function updateLineChartDaily() {
                     beginAtZero: true,
                     ticks: {
                         callback: function(value) {
-                            return formatMoney(value);
+                            if (value >= 1000000000) {
+                                return (value / 1000000000).toFixed(1).replace('.', ',') + ' tỷ';
+                            } else if (value >= 1000000) {
+                                return (value / 1000000).toFixed(1).replace('.', ',') + ' tr';
+                            } else {
+                                return value;
+                            }
+                        },
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                x: {
+                    ticks: {
+                        maxRotation: 30,
+                        minRotation: 30,
+                        font: {
+                            size: 12
                         }
                     }
                 }
@@ -357,12 +480,10 @@ function updateLineChartDaily() {
     });
 }
 
-// Bar chart chi tiết theo miền
 function updateBarChartMienDetail() {
     const ctx = document.getElementById('barChartMienDetail').getContext('2d');
-    
-    // Group by miền
     const mienData = {};
+    
     filteredData.forEach(item => {
         const mien = item.mien;
         mienData[mien] = (mienData[mien] || 0) + (item.doanhThuThuan || 0);
@@ -386,21 +507,39 @@ function updateBarChartMienDetail() {
                     display: true,
                     anchor: 'end',
                     align: 'top',
+                    offset: 4,
                     formatter: (value) => {
                         if (value >= 1000000000) {
-                            return (value / 1000000000).toFixed(1).replace('.', ',') + ' tỷ';
+                            const ty = value / 1000000000;
+                            const rounded = Math.round(ty * 10) / 10;
+                            return rounded.toString().replace('.', ',') + ' tỷ';
                         } else {
-                            return (value / 1000000).toFixed(1).replace('.', ',') + ' tr';
+                            const trieu = value / 1000000;
+                            const rounded = Math.round(trieu * 10) / 10;
+                            return rounded.toString().replace('.', ',') + ' tr';
                         }
                     },
                     color: '#333',
                     font: {
                         weight: 'bold',
-                        size: 11
+                        size: 14
                     },
-                    rotation: -45
+                    rotation: 0
+                },
+                legend: {
+                    labels: {
+                        font: {
+                            size: 13
+                        }
+                    }
                 },
                 tooltip: {
+                    bodyFont: {
+                        size: 13
+                    },
+                    titleFont: {
+                        size: 13
+                    },
                     callbacks: {
                         label: function(context) {
                             return formatMoney(context.raw);
@@ -413,7 +552,25 @@ function updateBarChartMienDetail() {
                     beginAtZero: true,
                     ticks: {
                         callback: function(value) {
-                            return formatMoney(value);
+                            if (value >= 1000000000) {
+                                return (value / 1000000000).toFixed(1).replace('.', ',') + ' tỷ';
+                            } else if (value >= 1000000) {
+                                return (value / 1000000).toFixed(1).replace('.', ',') + ' tr';
+                            } else {
+                                return value;
+                            }
+                        },
+                        font: {
+                            size: 13
+                        }
+                    }
+                },
+                x: {
+                    ticks: {
+                        maxRotation: 30,
+                        minRotation: 30,
+                        font: {
+                            size: 14
                         }
                     }
                 }
@@ -422,26 +579,23 @@ function updateBarChartMienDetail() {
         plugins: [ChartDataLabels]
     });
 }
-
-// Bar chart chi tiết theo khu vực
-function updateBarChartKVDetail() {
-    const ctx = document.getElementById('barChartKVDetail').getContext('2d');
-    
-    // Group by khu vực
+function updateBarChartKV() {
+    const ctx = document.getElementById('barChartKV').getContext('2d');
     const kvData = {};
+    
     filteredData.forEach(item => {
         const kv = item.maKhuVuc;
         kvData[kv] = (kvData[kv] || 0) + (item.doanhThuThuan || 0);
     });
 
-    charts.barKVDetail = new Chart(ctx, {
+    charts.barKV = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: Object.keys(kvData),
             datasets: [{
                 label: 'Doanh thu thuần',
                 data: Object.values(kvData),
-                backgroundColor: '#ff7300'
+                backgroundColor: '#667eea'
             }]
         },
         options: {
@@ -452,6 +606,7 @@ function updateBarChartKVDetail() {
                     display: true,
                     anchor: 'end',
                     align: 'top',
+                    offset: 4,
                     formatter: (value) => {
                         if (value >= 1000000000) {
                             return (value / 1000000000).toFixed(1).replace('.', ',') + ' tỷ';
@@ -462,11 +617,24 @@ function updateBarChartKVDetail() {
                     color: '#333',
                     font: {
                         weight: 'bold',
-                        size: 11
+                        size: 12
                     },
-                    rotation: -45
+                    rotation: 0
+                },
+                legend: {
+                    labels: {
+                        font: {
+                            size: 13
+                        }
+                    }
                 },
                 tooltip: {
+                    bodyFont: {
+                        size: 13
+                    },
+                    titleFont: {
+                        size: 13
+                    },
                     callbacks: {
                         label: function(context) {
                             return formatMoney(context.raw);
@@ -479,7 +647,104 @@ function updateBarChartKVDetail() {
                     beginAtZero: true,
                     ticks: {
                         callback: function(value) {
+                            if (value >= 1000000000) {
+                                return (value / 1000000000).toFixed(1).replace('.', ',') + ' tỷ';
+                            } else if (value >= 1000000) {
+                                return (value / 1000000).toFixed(1).replace('.', ',') + ' tr';
+                            } else {
+                                return value;
+                            }
+                        },
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                x: {
+                    ticks: {
+                        maxRotation: 30,
+                        minRotation: 30,
+                        font: {
+                            size: 12
+                        }
+                    }
+                }
+            }
+        },
+        plugins: [ChartDataLabels]
+    });
+}
+function updateBarChartKV() {
+    const ctx = document.getElementById('barChartKV').getContext('2d');
+    const kvData = {};
+
+    filteredData.forEach(item => {
+        const kv = item.maKhuVuc;
+        kvData[kv] = (kvData[kv] || 0) + (item.doanhThuThuan || 0);
+    });
+
+    charts.barKV = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(kvData),
+            datasets: [{
+                label: 'Doanh thu thuần',
+                data: Object.values(kvData),
+                backgroundColor: '#667eea'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                datalabels: {
+                    display: true,
+                    anchor: 'end',
+                    align: 'top',
+                    offset: 4,
+                    formatter: (value) => {
+                        if (value >= 1000000000) {
+                            return (value / 1000000000).toFixed(1).replace('.', ',') + ' tỷ';
+                        } else {
+                            return (value / 1000000).toFixed(1).replace('.', ',') + ' tr';
+                        }
+                    },
+                    color: '#333',
+                    font: {
+                        weight: 'bold',
+                        size: 10
+                    },
+                    rotation: 0
+                },
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            return formatMoney(context.raw);
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function (value) {
                             return formatMoney(value);
+                        },
+                        font: {
+                            size: 10
+                        }
+                    }
+                },
+                x: {
+                    ticks: {
+                        maxRotation: 30,
+                        minRotation: 30,
+                        font: {
+                            size: 10
                         }
                     }
                 }
@@ -489,23 +754,27 @@ function updateBarChartKVDetail() {
     });
 }
 
-// Bar chart top 20 tỉnh
-function updateBarChartProvinceTop() {
-    const ctx = document.getElementById('barChartProvinceTop').getContext('2d');
+function updateBarChartProvince() {
+    const ctx = document.getElementById('barChartProvince').getContext('2d');
+    if (!ctx) return;
     
-    // Group by tỉnh
+    if (charts.barProvince) {
+        charts.barProvince.destroy();
+    }
+    
+    const data = getProvinceFilteredData();
     const provinceData = {};
-    filteredData.forEach(item => {
+    
+    data.forEach(item => {
         const tinh = item.tinh;
         provinceData[tinh] = (provinceData[tinh] || 0) + (item.doanhThuThuan || 0);
     });
 
-    // Sort và lấy top 20
     const sortedProvinces = Object.entries(provinceData)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 20);
 
-    charts.barProvinceTop = new Chart(ctx, {
+    charts.barProvince = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: sortedProvinces.map(item => item[0]),
@@ -523,21 +792,39 @@ function updateBarChartProvinceTop() {
                     display: true,
                     anchor: 'end',
                     align: 'top',
+                    offset: 4,
                     formatter: (value) => {
                         if (value >= 1000000000) {
-                            return (value / 1000000000).toFixed(1).replace('.', ',') + ' tỷ';
+                            const ty = value / 1000000000;
+                            const rounded = Math.round(ty * 10) / 10;
+                            return rounded.toString().replace('.', ',') + ' tỷ';
                         } else {
-                            return (value / 1000000).toFixed(1).replace('.', ',') + ' tr';
+                            const trieu = value / 1000000;
+                            const rounded = Math.round(trieu * 10) / 10;
+                            return rounded.toString().replace('.', ',') + ' tr';
                         }
                     },
                     color: '#333',
                     font: {
                         weight: 'bold',
-                        size: 10
+                        size: 12
                     },
-                    rotation: -45
+                    rotation: 0
+                },
+                legend: {
+                    labels: {
+                        font: {
+                            size: 13
+                        }
+                    }
                 },
                 tooltip: {
+                    bodyFont: {
+                        size: 13
+                    },
+                    titleFont: {
+                        size: 13
+                    },
                     callbacks: {
                         label: function(context) {
                             return formatMoney(context.raw);
@@ -550,7 +837,25 @@ function updateBarChartProvinceTop() {
                     beginAtZero: true,
                     ticks: {
                         callback: function(value) {
-                            return formatMoney(value);
+                            if (value >= 1000000000) {
+                                return (value / 1000000000).toFixed(1).replace('.', ',') + ' tỷ';
+                            } else if (value >= 1000000) {
+                                return (value / 1000000).toFixed(1).replace('.', ',') + ' tr';
+                            } else {
+                                return value;
+                            }
+                        },
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                x: {
+                    ticks: {
+                        maxRotation: 45,
+                        minRotation: 45,
+                        font: {
+                            size: 11
                         }
                     }
                 }
@@ -560,18 +865,64 @@ function updateBarChartProvinceTop() {
     });
 }
 
-// Bar chart top 20 NPP
+function showNPPDetailModal(nppName) {
+    const modal = document.getElementById('nppDetailModal');
+    document.getElementById('nppDetailName').textContent = nppName;
+    
+    const nppOrders = filteredData.filter(item => item.NPP === nppName);
+    
+    let totalSales = 0;
+    let totalDiscount = 0;
+    let totalRevenue = 0;
+    
+    let html = '';
+    nppOrders.forEach(item => {
+        totalSales += item.doanhSoBan || 0;
+        totalDiscount += item.chietKhau || 0;
+        totalRevenue += item.doanhThuThuan || 0;
+        
+        html += `<tr>
+            <td>${item.ngay || ''}</td>
+            <td>${item.mien || ''}</td>
+            <td>${item.maKhuVuc || ''}</td>
+            <td>${item.tinh || ''}</td>
+            <td>${formatFullNumber(item.doanhSoBan)}</td>
+            <td>${formatFullNumber(item.chietKhau)}</td>
+            <td>${formatFullNumber(item.doanhThuThuan)}</td>
+        </tr>`;
+    });
+    
+    document.getElementById('nppDetailBody').innerHTML = html;
+    document.getElementById('nppDetailTotal').innerHTML = `
+        <i class="fas fa-chart-line"></i> 
+        Tổng: DSB: ${formatFullNumber(totalSales)} | 
+        CK: ${formatFullNumber(totalDiscount)} | 
+        DTT: ${formatFullNumber(totalRevenue)} | 
+        SL: ${nppOrders.length} đơn
+    `;
+    
+    modal.style.display = 'block';
+}
+
+function closeNPPDetailModal() {
+    const modal = document.getElementById('nppDetailModal');
+    modal.style.display = 'none';
+}
 function updateBarChartNPPTop() {
     const ctx = document.getElementById('barChartNPPTop').getContext('2d');
     
-    // Group by NPP
+    if (charts.barNPPTop) {
+        charts.barNPPTop.destroy();
+    }
+    
+    const data = getNPPFilteredData();
     const nppData = {};
-    filteredData.forEach(item => {
+    
+    data.forEach(item => {
         const npp = item.NPP;
         nppData[npp] = (nppData[npp] || 0) + (item.doanhThuThuan || 0);
     });
 
-    // Sort và lấy top 20
     const sortedNPP = Object.entries(nppData)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 20);
@@ -589,26 +940,43 @@ function updateBarChartNPPTop() {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            onClick: (event, activeElements) => {
+                if (activeElements.length > 0) {
+                    const index = activeElements[0].index;
+                    const npp = sortedNPP[index][0];
+                    showNPPDetailModal(npp);
+                }
+            },
             plugins: {
                 datalabels: {
                     display: true,
                     anchor: 'end',
                     align: 'top',
+                    offset: 4,
                     formatter: (value) => {
-                        if (value >= 1000000000) {
-                            return (value / 1000000000).toFixed(1).replace('.', ',') + ' tỷ';
-                        } else {
-                            return (value / 1000000).toFixed(1).replace('.', ',') + ' tr';
-                        }
+                        return formatMoney(value);
                     },
                     color: '#333',
                     font: {
                         weight: 'bold',
-                        size: 10
+                        size: 12
                     },
-                    rotation: -45
+                    rotation: 0
+                },
+                legend: {
+                    labels: {
+                        font: {
+                            size: 13
+                        }
+                    }
                 },
                 tooltip: {
+                    bodyFont: {
+                        size: 13
+                    },
+                    titleFont: {
+                        size: 13
+                    },
                     callbacks: {
                         label: function(context) {
                             return formatMoney(context.raw);
@@ -622,6 +990,18 @@ function updateBarChartNPPTop() {
                     ticks: {
                         callback: function(value) {
                             return formatMoney(value);
+                        },
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                x: {
+                    ticks: {
+                        maxRotation: 45,
+                        minRotation: 45,
+                        font: {
+                            size: 10
                         }
                     }
                 }
@@ -631,17 +1011,16 @@ function updateBarChartNPPTop() {
     });
 }
 
-// Cập nhật bảng theo miền
 function updateTables() {
     updateRegionTable();
     updateAreaTable();
     updateProvinceTable();
-    updateNPPTable();
+    updateNPPData(); // Thay đổi ở đây
 }
 
-// Bảng theo miền
 function updateRegionTable() {
     const mienData = {};
+    
     filteredData.forEach(item => {
         const mien = item.mien;
         if (!mienData[mien]) {
@@ -664,9 +1043,9 @@ function updateRegionTable() {
     Object.entries(mienData).forEach(([mien, data]) => {
         html += `<tr>
             <td>${mien}</td>
-            <td>${formatMoney(data.doanhSoBan)}</td>
-            <td>${formatMoney(data.chietKhau)}</td>
-            <td>${formatMoney(data.doanhThuThuan)}</td>
+            <td>${formatFullNumber(data.doanhSoBan)}</td>
+            <td>${formatFullNumber(data.chietKhau)}</td>
+            <td>${formatFullNumber(data.doanhThuThuan)}</td>
             <td>${formatNumber(data.soGiaoDich)}</td>
         </tr>`;
     });
@@ -675,9 +1054,9 @@ function updateRegionTable() {
     document.getElementById('regionTable').innerHTML = html;
 }
 
-// Bảng theo khu vực
 function updateAreaTable() {
     const kvData = {};
+    
     filteredData.forEach(item => {
         const kv = item.maKhuVuc;
         if (!kvData[kv]) {
@@ -700,9 +1079,9 @@ function updateAreaTable() {
     Object.entries(kvData).forEach(([kv, data]) => {
         html += `<tr>
             <td>${kv}</td>
-            <td>${formatMoney(data.doanhSoBan)}</td>
-            <td>${formatMoney(data.chietKhau)}</td>
-            <td>${formatMoney(data.doanhThuThuan)}</td>
+            <td>${formatFullNumber(data.doanhSoBan)}</td>
+            <td>${formatFullNumber(data.chietKhau)}</td>
+            <td>${formatFullNumber(data.doanhThuThuan)}</td>
             <td>${formatNumber(data.soGiaoDich)}</td>
         </tr>`;
     });
@@ -711,17 +1090,20 @@ function updateAreaTable() {
     document.getElementById('areaTable').innerHTML = html;
 }
 
-// Bảng theo tỉnh
 function updateProvinceTable() {
+    const data = getProvinceFilteredData();
     const provinceData = {};
-    filteredData.forEach(item => {
+    
+    data.forEach(item => {
         const tinh = item.tinh;
         if (!provinceData[tinh]) {
             provinceData[tinh] = {
                 doanhSoBan: 0,
                 chietKhau: 0,
                 doanhThuThuan: 0,
-                soGiaoDich: 0
+                soGiaoDich: 0,
+                mien: item.mien,
+                khuVuc: item.maKhuVuc
             };
         }
         provinceData[tinh].doanhSoBan += item.doanhSoBan || 0;
@@ -731,17 +1113,27 @@ function updateProvinceTable() {
     });
 
     let html = '<h3><i class="fas fa-city"></i> Thống kê theo tỉnh</h3>';
-    html += '<table><thead><tr><th>Tỉnh</th><th>Doanh số bán</th><th>Chiết khấu</th><th>Doanh thu thuần</th><th>Số giao dịch</th></tr></thead><tbody>';
     
-    // Sort theo doanh thu thuần giảm dần
+    let filterInfo = [];
+    if (provinceFilter.mien) filterInfo.push(`Miền: ${provinceFilter.mien}`);
+    if (provinceFilter.khuVuc) filterInfo.push(`Khu vực: ${provinceFilter.khuVuc}`);
+    
+    if (filterInfo.length > 0) {
+        html += `<p style="margin-bottom: 10px; color: #ff7300;"><i class="fas fa-info-circle"></i> Đang lọc: ${filterInfo.join(' - ')}</p>`;
+    }
+    
+    html += '<table><thead><tr><th>Tỉnh</th><th>Miền</th><th>Khu vực</th><th>Doanh số bán</th><th>Chiết khấu</th><th>Doanh thu thuần</th><th>Số giao dịch</th></tr></thead><tbody>';
+    
     Object.entries(provinceData)
         .sort((a, b) => b[1].doanhThuThuan - a[1].doanhThuThuan)
         .forEach(([tinh, data]) => {
             html += `<tr>
                 <td>${tinh}</td>
-                <td>${formatMoney(data.doanhSoBan)}</td>
-                <td>${formatMoney(data.chietKhau)}</td>
-                <td>${formatMoney(data.doanhThuThuan)}</td>
+                <td>${data.mien}</td>
+                <td>${data.khuVuc}</td>
+                <td>${formatFullNumber(data.doanhSoBan)}</td>
+                <td>${formatFullNumber(data.chietKhau)}</td>
+                <td>${formatFullNumber(data.doanhThuThuan)}</td>
                 <td>${formatNumber(data.soGiaoDich)}</td>
             </tr>`;
         });
@@ -750,10 +1142,11 @@ function updateProvinceTable() {
     document.getElementById('provinceTable').innerHTML = html;
 }
 
-// Bảng theo NPP
 function updateNPPTable() {
+    const data = getNPPFilteredData();
     const nppData = {};
-    filteredData.forEach(item => {
+    
+    data.forEach(item => {
         const npp = item.NPP;
         if (!nppData[npp]) {
             nppData[npp] = {
@@ -771,20 +1164,29 @@ function updateNPPTable() {
         nppData[npp].soGiaoDich++;
     });
 
-    let html = '<h3><i class="fas fa-users"></i> Thống kê theo NPP</h3>';
+    let html = '<h3><i class="fas fa-users"></i> Thống kê theo NPP (Click vào NPP để xem chi tiết)</h3>';
+    
+    let filterInfo = [];
+    if (nppFilter.mien) filterInfo.push(`Miền: ${nppFilter.mien}`);
+    if (nppFilter.khuVuc) filterInfo.push(`Khu vực: ${nppFilter.khuVuc}`);
+    if (nppFilter.tinh) filterInfo.push(`Tỉnh: ${nppFilter.tinh}`);
+    
+    if (filterInfo.length > 0) {
+        html += `<p style="margin-bottom: 10px; color: #4ecdc4;"><i class="fas fa-info-circle"></i> Đang lọc: ${filterInfo.join(' - ')}</p>`;
+    }
+    
     html += '<table><thead><tr><th>NPP</th><th>Miền</th><th>Tỉnh</th><th>Doanh số bán</th><th>Chiết khấu</th><th>Doanh thu thuần</th><th>Số giao dịch</th></tr></thead><tbody>';
     
-    // Sort theo doanh thu thuần giảm dần
     Object.entries(nppData)
         .sort((a, b) => b[1].doanhThuThuan - a[1].doanhThuThuan)
         .forEach(([npp, data]) => {
-            html += `<tr>
+            html += `<tr onclick="showNPPDetailModal('${npp.replace(/'/g, "\\'")}')" style="cursor: pointer;">
                 <td>${npp}</td>
                 <td>${data.mien}</td>
                 <td>${data.tinh}</td>
-                <td>${formatMoney(data.doanhSoBan)}</td>
-                <td>${formatMoney(data.chietKhau)}</td>
-                <td>${formatMoney(data.doanhThuThuan)}</td>
+                <td>${formatFullNumber(data.doanhSoBan)}</td>
+                <td>${formatFullNumber(data.chietKhau)}</td>
+                <td>${formatFullNumber(data.doanhThuThuan)}</td>
                 <td>${formatNumber(data.soGiaoDich)}</td>
             </tr>`;
         });
@@ -793,42 +1195,248 @@ function updateNPPTable() {
     document.getElementById('nppTable').innerHTML = html;
 }
 
-// Cập nhật bảng dữ liệu chính (Sắp xếp theo NPP)
-function updateDataTable() {
-    // Sắp xếp dữ liệu theo NPP
-    const sortedData = [...filteredData].sort((a, b) => {
-        const nppA = a.NPP || '';
-        const nppB = b.NPP || '';
-        return nppA.localeCompare(nppB);
-    });
 
-    let html = '';
-    sortedData.forEach(item => {
-        html += `<tr>
-            <td>${item.mien || ''}</td>
-            <td>${item.maKhuVuc || ''}</td>
-            <td>${item.tinh || ''}</td>
-            <td>${item.NPP || ''}</td>
-            <td>${formatMoney(item.doanhSoBan)}</td>
-            <td>${formatMoney(item.chietKhau)}</td>
-            <td>${formatMoney(item.doanhThuThuan)}</td>
-            <td>${item.ngay || ''}</td>
-        </tr>`;
-    });
-    document.getElementById('tableBody').innerHTML = html;
-}
-
-// Chuyển tab
-function switchTab(tabId) {
-    // Update tab buttons
+function switchTab(tabId, event) {
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('active');
     });
     event.target.classList.add('active');
-    
-    // Update tab content
+
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
     });
     document.getElementById(tabId).classList.add('active');
+
+    if (tabId === 'byProvince') {
+        openProvinceModal();
+        updateProvinceData();
+    } else if (tabId === 'byNPP') {
+        openNPPModal();
+        updateNPPData();
+    }
+}
+function openNPPModal() {
+    const modal = document.getElementById('nppModal');
+    modal.style.display = 'block';
+    initializeNPPFilters();
+}
+
+// Đóng modal NPP
+function closeNPPModal() {
+    const modal = document.getElementById('nppModal');
+    modal.style.display = 'none';
+}
+function updateNPPKhuVucOptions() {
+    const selectedMien = document.getElementById('nppMienFilter').value;
+    const kvSelect = document.getElementById('nppKhuVucFilter');
+    const tinhSelect = document.getElementById('nppTinhFilter');
+
+    let filteredByMien = salesData;
+    if (selectedMien) {
+        filteredByMien = salesData.filter(item => item.mien === selectedMien);
+    }
+
+    const khuVucs = [...new Set(filteredByMien.map(item => item.maKhuVuc))];
+
+    kvSelect.innerHTML = '<option value="">Tất cả khu vực</option>';
+    khuVucs.sort().forEach(kv => {
+        const option = document.createElement('option');
+        option.value = kv;
+        option.textContent = kv;
+        kvSelect.appendChild(option);
+    });
+
+    // Reset tỉnh khi đổi khu vực
+    tinhSelect.innerHTML = '<option value="">Tất cả tỉnh</option>';
+}
+function updateNPPTinhOptions() {
+    const selectedMien = document.getElementById('nppMienFilter').value;
+    const selectedKV = document.getElementById('nppKhuVucFilter').value;
+    const tinhSelect = document.getElementById('nppTinhFilter');
+
+    let filteredData = salesData;
+    if (selectedMien) {
+        filteredData = filteredData.filter(item => item.mien === selectedMien);
+    }
+    if (selectedKV) {
+        filteredData = filteredData.filter(item => item.maKhuVuc === selectedKV);
+    }
+
+    const tinhs = [...new Set(filteredData.map(item => item.tinh))];
+
+    tinhSelect.innerHTML = '<option value="">Tất cả tỉnh</option>';
+    tinhs.sort().forEach(tinh => {
+        const option = document.createElement('option');
+        option.value = tinh;
+        option.textContent = tinh;
+        tinhSelect.appendChild(option);
+    });
+}
+function applyNPPFilter() {
+    nppFilter.mien = document.getElementById('nppMienFilter').value;
+    nppFilter.khuVuc = document.getElementById('nppKhuVucFilter').value;
+    nppFilter.tinh = document.getElementById('nppTinhFilter').value;
+
+    closeNPPModal();
+    updateNPPData();
+}
+function resetNPPFilter() {
+    document.getElementById('nppMienFilter').value = '';
+    document.getElementById('nppKhuVucFilter').innerHTML = '<option value="">Tất cả khu vực</option>';
+    document.getElementById('nppTinhFilter').innerHTML = '<option value="">Tất cả tỉnh</option>';
+    nppFilter = { mien: '', khuVuc: '', tinh: '' };
+
+    closeNPPModal();
+    updateNPPData();
+}
+function getNPPFilteredData() {
+    let data = [...filteredData];
+
+    if (nppFilter.mien) {
+        data = data.filter(item => item.mien === nppFilter.mien);
+    }
+    if (nppFilter.khuVuc) {
+        data = data.filter(item => item.maKhuVuc === nppFilter.khuVuc);
+    }
+    if (nppFilter.tinh) {
+        data = data.filter(item => item.tinh === nppFilter.tinh);
+    }
+
+    return data;
+}
+function updateNPPData() {
+    updateBarChartNPPTop();
+    updateNPPTable();
+}
+function initializeNPPFilters() {
+    const miens = [...new Set(salesData.map(item => item.mien))];
+    const mienSelect = document.getElementById('nppMienFilter');
+
+    const currentMien = mienSelect.value;
+
+    mienSelect.innerHTML = '<option value="">Tất cả miền</option>';
+    miens.sort().forEach(mien => {
+        const option = document.createElement('option');
+        option.value = mien;
+        option.textContent = mien;
+        mienSelect.appendChild(option);
+    });
+
+    if (currentMien) {
+        mienSelect.value = currentMien;
+    }
+
+    updateNPPKhuVucOptions();
+
+    if (nppFilter.khuVuc) {
+        document.getElementById('nppKhuVucFilter').value = nppFilter.khuVuc;
+    }
+    if (nppFilter.tinh) {
+        document.getElementById('nppTinhFilter').value = nppFilter.tinh;
+    }
+}
+function openProvinceModal() {
+    const modal = document.getElementById('provinceModal');
+    modal.style.display = 'block';
+    initializeProvinceFilters();
+}
+
+function closeProvinceModal() {
+    const modal = document.getElementById('provinceModal');
+    modal.style.display = 'none';
+}
+
+function applyProvinceFilter() {
+    provinceFilter.mien = document.getElementById('provinceMienFilter').value;
+    provinceFilter.khuVuc = document.getElementById('provinceKhuVucFilter').value;
+    closeProvinceModal();
+    updateProvinceData();
+}
+
+function resetProvinceFilter() {
+    document.getElementById('provinceMienFilter').value = '';
+    document.getElementById('provinceKhuVucFilter').innerHTML = '<option value="">Tất cả khu vực</option>';
+    provinceFilter.mien = '';
+    provinceFilter.khuVuc = '';
+    closeProvinceModal();
+    updateProvinceData();
+}
+
+function initializeProvinceFilters() {
+    const miens = [...new Set(salesData.map(item => item.mien))];
+    const mienSelect = document.getElementById('provinceMienFilter');
+
+    const currentValue = mienSelect.value;
+
+    mienSelect.innerHTML = '<option value="">Tất cả miền</option>';
+    miens.sort().forEach(mien => {
+        const option = document.createElement('option');
+        option.value = mien;
+        option.textContent = mien;
+        mienSelect.appendChild(option);
+    });
+
+    if (currentValue) {
+        mienSelect.value = currentValue;
+    }
+
+    updateKhuVucOptions();
+
+    if (provinceFilter.khuVuc) {
+        document.getElementById('provinceKhuVucFilter').value = provinceFilter.khuVuc;
+    }
+}
+
+function updateKhuVucOptions() {
+    const selectedMien = document.getElementById('provinceMienFilter').value;
+    const kvSelect = document.getElementById('provinceKhuVucFilter');
+
+    let filteredByMien = salesData;
+    if (selectedMien) {
+        filteredByMien = salesData.filter(item => item.mien === selectedMien);
+    }
+
+    const khuVucs = [...new Set(filteredByMien.map(item => item.maKhuVuc))];
+
+    kvSelect.innerHTML = '<option value="">Tất cả khu vực</option>';
+    khuVucs.sort().forEach(kv => {
+        const option = document.createElement('option');
+        option.value = kv;
+        option.textContent = kv;
+        kvSelect.appendChild(option);
+    });
+}
+
+function updateProvinceData() {
+    updateBarChartProvince();
+    updateProvinceTable();
+}
+
+function getProvinceFilteredData() {
+    let data = [...filteredData];
+
+    if (provinceFilter.mien) {
+        data = data.filter(item => item.mien === provinceFilter.mien);
+    }
+    if (provinceFilter.khuVuc) {
+        data = data.filter(item => item.maKhuVuc === provinceFilter.khuVuc);
+    }
+
+    return data;
+}
+
+window.onclick = function(event) {
+    const provinceModal = document.getElementById('provinceModal');
+    const nppModal = document.getElementById('nppModal');
+    const nppDetailModal = document.getElementById('nppDetailModal');
+    
+    if (event.target == provinceModal) {
+        closeProvinceModal();
+    }
+    if (event.target == nppModal) {
+        closeNPPModal();
+    }
+    if (event.target == nppDetailModal) {
+        closeNPPDetailModal();
+    }
 }

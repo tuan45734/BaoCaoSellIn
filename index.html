@@ -182,30 +182,99 @@
                 </div>
             </div>
         </div>
+        <!-- Phần modal chi tiết NPP trong index.html -->
         <div id="nppDetailModal" class="modal">
-    <div class="modal-content" style="max-width: 90%; width: 1200px;">
+            <div class="modal-content modal-large">
+                <div class="modal-header">
+                    <h3><i class="fas fa-file-invoice"></i> Chi tiết đơn hàng - <span id="nppDetailName"></span></h3>
+                    <span class="close" onclick="closeNPPDetailModal()">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="apply-btn" onclick="expandAllOrders()"
+                            style="padding: 8px 15px; font-size: 13px;">
+                            <i class="fas fa-expand-alt"></i> Mở rộng tất cả
+                        </button>
+                        <button class="apply-btn" onclick="collapseAllOrders()"
+                            style="padding: 8px 15px; font-size: 13px; background: #6c757d;">
+                            <i class="fas fa-compress-alt"></i> Thu gọn tất cả
+                        </button>
+                    </div>
+                    <div style="overflow-x: auto; max-height: 500px;" id="nppDetailContainer">
+                        <!-- Nội dung sẽ được tạo động bằng JavaScript -->
+                    </div>
+                    <div style="margin-top: 20px; text-align: right; font-weight: bold;" id="nppDetailTotal"></div>
+                </div>
+            </div>
+        </div>
+<!-- Modal chi tiết sản phẩm theo tỉnh -->
+<div id="provinceDetailModal" class="modal">
+    <div class="modal-content modal-xxl">
         <div class="modal-header">
-            <h3><i class="fas fa-file-invoice"></i> Chi tiết đơn hàng - <span id="nppDetailName"></span></h3>
-            <span class="close" onclick="closeNPPDetailModal()">&times;</span>
+            <h3><i class="fas fa-boxes"></i> Chi tiết sản phẩm - <span id="provinceDetailName"></span></h3>
+            <span class="close" onclick="closeProvinceDetailModal()">&times;</span>
         </div>
         <div class="modal-body">
+            <div style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: space-between;">
+                <div>
+                    <span id="provinceDetailInfo" style="background: #f0f0f0; padding: 8px 15px; border-radius: 20px;"></span>
+                </div>
+                <div>
+                    <button class="apply-btn" onclick="exportProvinceToExcel()" style="padding: 8px 15px; font-size: 13px; background: #28a745;">
+                        <i class="fas fa-file-excel"></i> Xuất Excel
+                    </button>
+                </div>
+            </div>
             <div style="overflow-x: auto; max-height: 500px;">
-                <table class="detail-table" id="nppDetailTable">
+                <table class="detail-table" id="provinceDetailTable">
                     <thead>
                         <tr>
-                            <th>Ngày</th>
-                            <th>Miền</th>
-                            <th>Khu vực</th>
-                            <th>Tỉnh</th>
+                            <th>STT</th>
+                            <th>Tên sản phẩm</th>
+                            <th>Số lượng</th>
                             <th>Doanh số bán</th>
                             <th>Chiết khấu</th>
                             <th>Doanh thu thuần</th>
+                            <th>Giá trung bình</th>
+                            <th>Số NPP</th>
+                            <th>Chi tiết NPP</th>
                         </tr>
                     </thead>
-                    <tbody id="nppDetailBody"></tbody>
+                    <tbody id="provinceDetailBody"></tbody>
                 </table>
             </div>
-            <div style="margin-top: 20px; text-align: right; font-weight: bold;" id="nppDetailTotal"></div>
+            <div style="margin-top: 20px; font-weight: bold;" id="provinceDetailTotal"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal chi tiết NPP theo sản phẩm -->
+<div id="nppByProductModal" class="modal">
+    <div class="modal-content modal-xl">
+        <div class="modal-header">
+            <h3><i class="fas fa-users"></i> Chi tiết NPP - <span id="nppByProductName"></span></h3>
+            <span class="close" onclick="closeNPPByProductModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div style="margin-bottom: 10px;" id="nppByProductInfo"></div>
+            <div style="overflow-x: auto; max-height: 400px;">
+                <table class="detail-table" id="nppByProductTable">
+                    <thead>
+                        <tr>
+                            <th>NPP</th>
+                            <th>Tỉnh</th>
+                            <th>Khu vực</th>
+                            <th>Số lượng</th>
+                            <th>Doanh số bán</th>
+                            <th>Chiết khấu</th>
+                            <th>Doanh thu thuần</th>
+                            <th>Ngày bán</th>
+                        </tr>
+                    </thead>
+                    <tbody id="nppByProductBody"></tbody>
+                </table>
+            </div>
+            <div style="margin-top: 20px; font-weight: bold; text-align: right;" id="nppByProductTotal"></div>
         </div>
     </div>
 </div>

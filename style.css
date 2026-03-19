@@ -1,3 +1,4 @@
+/* style.css */
 * {
     margin: 0;
     padding: 0;
@@ -281,13 +282,29 @@ tr:hover {
 
 .modal-content {
     background-color: white;
-    margin: 15% auto;
+    margin: 5% auto;
     padding: 0;
     border-radius: 15px;
     width: 90%;
     max-width: 500px;
     box-shadow: 0 5px 30px rgba(0,0,0,0.3);
     animation: slideDown 0.3s;
+}
+
+/* Modal sizes */
+.modal-large {
+    max-width: 1200px !important;
+    width: 95% !important;
+}
+
+.modal-xl {
+    max-width: 1100px !important;
+    width: 90% !important;
+}
+
+.modal-xxl {
+    max-width: 1400px !important;
+    width: 95% !important;
 }
 
 @keyframes slideDown {
@@ -377,8 +394,14 @@ tr:hover {
 /* Responsive cho modal */
 @media (max-width: 768px) {
     .modal-content {
-        margin: 30% auto;
+        margin: 10% auto;
         width: 95%;
+    }
+    .modal-large,
+    .modal-xl,
+    .modal-xxl {
+        width: 98% !important;
+        margin: 5% auto;
     }
 }
 .detail-table {
@@ -393,6 +416,7 @@ tr:hover {
     font-weight: 500;
     position: sticky;
     top: 0;
+    z-index: 10;
 }
 
 .detail-table td {
@@ -403,4 +427,296 @@ tr:hover {
 
 .detail-table tr:hover {
     background-color: #f8f9fa;
+}
+/* Thêm vào cuối file style.css */
+
+.detail-table th {
+    background: #ff7300;
+    color: white;
+    padding: 12px;
+    font-weight: 500;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.detail-table td {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    text-align: center;
+}
+
+.detail-table td:first-child,
+.detail-table td:nth-child(3) {
+    text-align: left;
+}
+
+.detail-table tr:hover {
+    background-color: #f8f9fa;
+}
+
+.detail-table tr[style*="background-color: #ff7300"] td {
+    font-weight: bold;
+    padding: 8px;
+}
+
+.detail-table tr[style*="background-color: #e8f4f8"] td {
+    font-style: italic;
+    border-bottom: 2px solid #ff7300;
+}
+
+#nppDetailTotal {
+    background: linear-gradient(135deg, #667eea20 0%, #ff730020 100%);
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 20px;
+    font-size: 15px;
+}
+/* Thêm vào cuối file style.css */
+
+/* Style cho order card */
+.order-card {
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.order-card:hover {
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.order-header {
+    background: linear-gradient(135deg, #667eea20 0%, #ff730020 100%);
+    padding: 12px 15px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ddd;
+    transition: background 0.3s;
+}
+
+.order-header:hover {
+    background: linear-gradient(135deg, #667eea40 0%, #ff730040 100%);
+}
+
+.order-header i.fa-chevron-down {
+    transition: transform 0.3s;
+    color: #ff7300;
+}
+
+.order-details {
+    padding: 15px;
+    background: white;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Style cho bảng trong chi tiết đơn hàng */
+.order-details .detail-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.order-details .detail-table th {
+    background: #ff7300;
+    color: white;
+    padding: 10px;
+    font-weight: 500;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+}
+
+.order-details .detail-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #eee;
+    text-align: center;
+}
+
+.order-details .detail-table td:nth-child(3) {
+    text-align: left;
+    max-width: 400px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.order-details .detail-table tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* Style cho nút mở rộng/thu gọn */
+#nppDetailContainer {
+    scrollbar-width: thin;
+    scrollbar-color: #ff7300 #f0f0f0;
+}
+
+#nppDetailContainer::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+#nppDetailContainer::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 4px;
+}
+
+#nppDetailContainer::-webkit-scrollbar-thumb {
+    background: #ff7300;
+    border-radius: 4px;
+}
+
+#nppDetailContainer::-webkit-scrollbar-thumb:hover {
+    background: #e56700;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .order-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .order-header > div:first-child {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    
+    .order-details .detail-table td:nth-child(3) {
+        max-width: 150px;
+    }
+}
+
+/* Style cho các modal lớn */
+#provinceDetailModal .detail-table th,
+#nppDetailModal .detail-table th,
+#nppByProductModal .detail-table th {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+}
+
+#provinceDetailModal .detail-table td:nth-child(2) {
+    text-align: left;
+    max-width: 500px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#nppByProductModal .detail-table td:first-child {
+    text-align: left;
+    font-weight: 500;
+    color: #ff7300;
+}
+
+/* Style cho nút trong bảng */
+.apply-btn i {
+    margin-right: 5px;
+}
+
+/* Hiệu ứng hover cho hàng trong bảng tỉnh */
+#provinceTable tbody tr:hover {
+    background-color: #fff3e0;
+    cursor: pointer;
+    transform: scale(1.01);
+    box-shadow: 0 2px 8px rgba(255,115,0,0.2);
+    transition: all 0.2s;
+}
+
+/* Badge thông tin */
+.province-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    margin-left: 5px;
+}
+
+.province-badge.product {
+    background: #4ecdc4;
+    color: white;
+}
+
+.province-badge.npp {
+    background: #ff7300;
+    color: white;
+}
+
+/* Cải thiện hiển thị cho các modal lớn trên màn hình nhỏ */
+@media (max-width: 1200px) {
+    .modal-xxl {
+        max-width: 95% !important;
+    }
+    
+    .modal-large {
+        max-width: 95% !important;
+    }
+    
+    .modal-xl {
+        max-width: 95% !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .modal-xxl,
+    .modal-large,
+    .modal-xl {
+        width: 98% !important;
+        margin: 2% auto;
+    }
+    
+    #provinceDetailModal .detail-table td:nth-child(2) {
+        max-width: 200px;
+    }
+    
+    .order-header > div:first-child {
+        font-size: 12px;
+    }
+    
+    .order-header span {
+        display: inline-block;
+        margin-right: 5px;
+    }
+}
+
+/* Tối ưu hiển thị bảng trong modal */
+.modal-body {
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.modal-body::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+    background: #ff7300;
+    border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+    background: #e56700;
 }

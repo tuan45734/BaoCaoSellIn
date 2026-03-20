@@ -88,29 +88,57 @@
             <div class="data-table" id="areaTable"></div>
         </div>
 
-        <div id="byProvince" class="tab-content">
-            <div class="charts-grid">
-                <div class="chart-container full-width-chart">
-                    <h3><i class="fas fa-chart-bar"></i> Doanh số theo tỉnh</h3>
-                    <div class="chart-wrapper">
-                        <canvas id="barChartProvince"></canvas>
-                    </div>
-                </div>
+    <!-- Thay thế phần byProvince tab content -->
+<div id="byProvince" class="tab-content">
+    <div class="charts-grid">
+        <div class="chart-container full-width-chart">
+            <h3><i class="fas fa-chart-bar"></i> Doanh số bán theo tỉnh</h3>
+            <div class="chart-wrapper">
+                <canvas id="barChartProvince"></canvas>
             </div>
-            <div class="data-table" id="provinceTable"></div>
         </div>
+    </div>
+    
+    <!-- Tiêu đề và tìm kiếm cùng hàng -->
+    <div class="data-table-header">
+        <h3><i class="fas fa-city"></i> Thống kê theo tỉnh (Click vào tỉnh để xem chi tiết sản phẩm)</h3>
+        <div class="header-search-wrapper">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="provinceSearch" placeholder="Tìm kiếm theo tên tỉnh...">
+            <button class="clear-search-btn" onclick="clearProvinceSearch()" title="Xóa tìm kiếm">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+    
+    <div class="data-table" id="provinceTable"></div>
+</div>
 
-        <div id="byNPP" class="tab-content">
-            <div class="charts-grid">
-                <div class="chart-container full-width-chart">
-                    <h3><i class="fas fa-chart-bar"></i> Doanh số theo NPP</h3>
-                    <div class="chart-wrapper">
-                        <canvas id="barChartNPPTop"></canvas>
-                    </div>
-                </div>
+<!-- Thay thế phần byNPP tab content -->
+<div id="byNPP" class="tab-content">
+    <div class="charts-grid">
+        <div class="chart-container full-width-chart">
+            <h3><i class="fas fa-chart-bar"></i> Doanh số bán theo NPP</h3>
+            <div class="chart-wrapper">
+                <canvas id="barChartNPPTop"></canvas>
             </div>
-            <div class="data-table" id="nppTable"></div>
         </div>
+    </div>
+    
+    <!-- Tiêu đề và tìm kiếm cùng hàng -->
+    <div class="data-table-header">
+        <h3><i class="fas fa-users"></i> Thống kê theo NPP (Click vào NPP để xem chi tiết)</h3>
+        <div class="header-search-wrapper">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="nppSearch" placeholder="Tìm kiếm theo tên NPP...">
+            <button class="clear-search-btn" onclick="clearNPPSearch()" title="Xóa tìm kiếm">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+    
+    <div class="data-table" id="nppTable"></div>
+</div>
 
         <div id="provinceModal" class="modal">
             <div class="modal-content">
@@ -207,77 +235,80 @@
                 </div>
             </div>
         </div>
-<!-- Modal chi tiết sản phẩm theo tỉnh -->
-<div id="provinceDetailModal" class="modal">
-    <div class="modal-content modal-xxl">
-        <div class="modal-header">
-            <h3><i class="fas fa-boxes"></i> Chi tiết sản phẩm - <span id="provinceDetailName"></span></h3>
-            <span class="close" onclick="closeProvinceDetailModal()">&times;</span>
-        </div>
-        <div class="modal-body">
-            <div style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: space-between;">
-                <div>
-                    <span id="provinceDetailInfo" style="background: #f0f0f0; padding: 8px 15px; border-radius: 20px;"></span>
+        <!-- Modal chi tiết sản phẩm theo tỉnh -->
+        <div id="provinceDetailModal" class="modal">
+            <div class="modal-content modal-xxl">
+                <div class="modal-header">
+                    <h3><i class="fas fa-boxes"></i> Chi tiết sản phẩm - <span id="provinceDetailName"></span></h3>
+                    <span class="close" onclick="closeProvinceDetailModal()">&times;</span>
                 </div>
-                <div>
-                    <button class="apply-btn" onclick="exportProvinceToExcel()" style="padding: 8px 15px; font-size: 13px; background: #28a745;">
-                        <i class="fas fa-file-excel"></i> Xuất Excel
-                    </button>
+                <div class="modal-body">
+                    <div
+                        style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: space-between;">
+                        <div>
+                            <span id="provinceDetailInfo"
+                                style="background: #f0f0f0; padding: 8px 15px; border-radius: 20px;"></span>
+                        </div>
+                        <div>
+                            <button class="apply-btn" onclick="exportProvinceToExcel()"
+                                style="padding: 8px 15px; font-size: 13px; background: #28a745;">
+                                <i class="fas fa-file-excel"></i> Xuất Excel
+                            </button>
+                        </div>
+                    </div>
+                    <div style="overflow-x: auto; max-height: 500px;">
+                        <table class="detail-table" id="provinceDetailTable">
+                            <thead>
+                                <tr>
+                                    <th>STT</th>
+                                    <th>Tên sản phẩm</th>
+                                    <th>Số lượng</th>
+                                    <th>Doanh số bán</th>
+                                    <th>Chiết khấu</th>
+                                    <th>Doanh thu thuần</th>
+                                    <th>Giá trung bình</th>
+                                    <th>Số NPP</th>
+                                    <th>Chi tiết NPP</th>
+                                </tr>
+                            </thead>
+                            <tbody id="provinceDetailBody"></tbody>
+                        </table>
+                    </div>
+                    <div style="margin-top: 20px; font-weight: bold;" id="provinceDetailTotal"></div>
                 </div>
             </div>
-            <div style="overflow-x: auto; max-height: 500px;">
-                <table class="detail-table" id="provinceDetailTable">
-                    <thead>
-                        <tr>
-                            <th>STT</th>
-                            <th>Tên sản phẩm</th>
-                            <th>Số lượng</th>
-                            <th>Doanh số bán</th>
-                            <th>Chiết khấu</th>
-                            <th>Doanh thu thuần</th>
-                            <th>Giá trung bình</th>
-                            <th>Số NPP</th>
-                            <th>Chi tiết NPP</th>
-                        </tr>
-                    </thead>
-                    <tbody id="provinceDetailBody"></tbody>
-                </table>
-            </div>
-            <div style="margin-top: 20px; font-weight: bold;" id="provinceDetailTotal"></div>
         </div>
-    </div>
-</div>
 
-<!-- Modal chi tiết NPP theo sản phẩm -->
-<div id="nppByProductModal" class="modal">
-    <div class="modal-content modal-xl">
-        <div class="modal-header">
-            <h3><i class="fas fa-users"></i> Chi tiết NPP - <span id="nppByProductName"></span></h3>
-            <span class="close" onclick="closeNPPByProductModal()">&times;</span>
-        </div>
-        <div class="modal-body">
-            <div style="margin-bottom: 10px;" id="nppByProductInfo"></div>
-            <div style="overflow-x: auto; max-height: 400px;">
-                <table class="detail-table" id="nppByProductTable">
-                    <thead>
-                        <tr>
-                            <th>NPP</th>
-                            <th>Tỉnh</th>
-                            <th>Khu vực</th>
-                            <th>Số lượng</th>
-                            <th>Doanh số bán</th>
-                            <th>Chiết khấu</th>
-                            <th>Doanh thu thuần</th>
-                            <th>Ngày bán</th>
-                        </tr>
-                    </thead>
-                    <tbody id="nppByProductBody"></tbody>
-                </table>
+        <!-- Modal chi tiết NPP theo sản phẩm -->
+        <div id="nppByProductModal" class="modal">
+            <div class="modal-content modal-xl">
+                <div class="modal-header">
+                    <h3><i class="fas fa-users"></i> Chi tiết NPP - <span id="nppByProductName"></span></h3>
+                    <span class="close" onclick="closeNPPByProductModal()">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div style="margin-bottom: 10px;" id="nppByProductInfo"></div>
+                    <div style="overflow-x: auto; max-height: 400px;">
+                        <table class="detail-table" id="nppByProductTable">
+                            <thead>
+                                <tr>
+                                    <th>NPP</th>
+                                    <th>Tỉnh</th>
+                                    <th>Khu vực</th>
+                                    <th>Số lượng</th>
+                                    <th>Doanh số bán</th>
+                                    <th>Chiết khấu</th>
+                                    <th>Doanh thu thuần</th>
+                                    <th>Ngày bán</th>
+                                </tr>
+                            </thead>
+                            <tbody id="nppByProductBody"></tbody>
+                        </table>
+                    </div>
+                    <div style="margin-top: 20px; font-weight: bold; text-align: right;" id="nppByProductTotal"></div>
+                </div>
             </div>
-            <div style="margin-top: 20px; font-weight: bold; text-align: right;" id="nppByProductTotal"></div>
         </div>
-    </div>
-</div>
     </div>
 
     <script src="data.js"></script>

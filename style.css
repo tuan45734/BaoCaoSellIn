@@ -12,7 +12,6 @@ body {
 }
 
 .container {
-  
     margin: 0 auto;
 }
 
@@ -87,6 +86,10 @@ body {
 
 .apply-btn:hover {
     transform: translateY(-2px);
+}
+
+.apply-btn i {
+    margin-right: 5px;
 }
 
 .stats-grid {
@@ -182,7 +185,7 @@ table {
 }
 
 th {
-    background:  #ff7300 ;
+    background: #ff7300;
     color: white;
     padding: 12px;
     font-weight: 500;
@@ -246,22 +249,6 @@ tr:hover {
     display: block;
 }
 
-@media (max-width: 768px) {
-    .charts-grid {
-        grid-template-columns: 1fr;
-    }
-    .full-width-chart {
-        grid-column: span 1;
-    }
-    .filter-section {
-        flex-direction: column;
-    }
-    .filter-group {
-        width: 100%;
-    }
-}
-/* Thêm vào cuối file style.css */
-
 /* Modal styles */
 .modal {
     display: none;
@@ -291,6 +278,17 @@ tr:hover {
     animation: slideDown 0.3s;
 }
 
+@keyframes slideDown {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
 /* Modal sizes */
 .modal-large {
     max-width: 1200px !important;
@@ -305,17 +303,6 @@ tr:hover {
 .modal-xxl {
     max-width: 1400px !important;
     width: 95% !important;
-}
-
-@keyframes slideDown {
-    from {
-        transform: translateY(-50px);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
 }
 
 .modal-header {
@@ -349,6 +336,8 @@ tr:hover {
 
 .modal-body {
     padding: 20px;
+    max-height: 80vh;
+    overflow-y: auto;
 }
 
 .modal-body .filter-group {
@@ -391,19 +380,31 @@ tr:hover {
     box-shadow: 0 5px 15px rgba(0,0,0,0.2);
 }
 
-/* Responsive cho modal */
-@media (max-width: 768px) {
-    .modal-content {
-        margin: 10% auto;
-        width: 95%;
-    }
-    .modal-large,
-    .modal-xl,
-    .modal-xxl {
-        width: 98% !important;
-        margin: 5% auto;
-    }
+/* Scrollbar styles */
+.modal-body::-webkit-scrollbar,
+#nppDetailContainer::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
 }
+
+.modal-body::-webkit-scrollbar-track,
+#nppDetailContainer::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb,
+#nppDetailContainer::-webkit-scrollbar-thumb {
+    background: #ff7300;
+    border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover,
+#nppDetailContainer::-webkit-scrollbar-thumb:hover {
+    background: #e56700;
+}
+
+/* Detail table styles */
 .detail-table {
     width: 100%;
     border-collapse: collapse;
@@ -416,28 +417,7 @@ tr:hover {
     font-weight: 500;
     position: sticky;
     top: 0;
-    z-index: 10;
-}
-
-.detail-table td {
-    padding: 10px;
-    border-bottom: 1px solid #ddd;
-    text-align: center;
-}
-
-.detail-table tr:hover {
-    background-color: #f8f9fa;
-}
-/* Thêm vào cuối file style.css */
-
-.detail-table th {
-    background: #ff7300;
-    color: white;
-    padding: 12px;
-    font-weight: 500;
-    position: sticky;
-    top: 0;
-    z-index: 10;
+    z-index: 20;
 }
 
 .detail-table td {
@@ -455,14 +435,22 @@ tr:hover {
     background-color: #f8f9fa;
 }
 
-.detail-table tr[style*="background-color: #ff7300"] td {
-    font-weight: bold;
-    padding: 8px;
+.detail-table td:first-child {
+    font-weight: 500;
 }
 
-.detail-table tr[style*="background-color: #e8f4f8"] td {
-    font-style: italic;
-    border-bottom: 2px solid #ff7300;
+#provinceDetailModal .detail-table td:nth-child(2) {
+    text-align: left;
+    max-width: 500px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#nppByProductModal .detail-table td:first-child {
+    text-align: left;
+    font-weight: 500;
+    color: #ff7300;
 }
 
 #nppDetailTotal {
@@ -472,9 +460,8 @@ tr:hover {
     margin-top: 20px;
     font-size: 15px;
 }
-/* Thêm vào cuối file style.css */
 
-/* Style cho order card */
+/* Order card styles */
 .order-card {
     margin-bottom: 15px;
     border: 1px solid #ddd;
@@ -513,39 +500,6 @@ tr:hover {
     animation: slideDown 0.3s ease;
 }
 
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Style cho bảng trong chi tiết đơn hàng */
-.order-details .detail-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.order-details .detail-table th {
-    background: #ff7300;
-    color: white;
-    padding: 10px;
-    font-weight: 500;
-    position: sticky;
-    top: 0;
-    z-index: 5;
-}
-
-.order-details .detail-table td {
-    padding: 8px 10px;
-    border-bottom: 1px solid #eee;
-    text-align: center;
-}
-
 .order-details .detail-table td:nth-child(3) {
     text-align: left;
     max-width: 400px;
@@ -554,92 +508,169 @@ tr:hover {
     text-overflow: ellipsis;
 }
 
-.order-details .detail-table tr:hover {
-    background-color: #f8f9fa;
+/* Data table header with search */
+.data-table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 10px 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    flex-wrap: wrap;
+    gap: 15px;
 }
 
-/* Style cho nút mở rộng/thu gọn */
-#nppDetailContainer {
-    scrollbar-width: thin;
-    scrollbar-color: #ff7300 #f0f0f0;
+.data-table-header h3 {
+    margin: 0;
+    color: #555;
+    font-size: 1.1em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-#nppDetailContainer::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-
-#nppDetailContainer::-webkit-scrollbar-track {
-    background: #f0f0f0;
-    border-radius: 4px;
-}
-
-#nppDetailContainer::-webkit-scrollbar-thumb {
-    background: #ff7300;
-    border-radius: 4px;
-}
-
-#nppDetailContainer::-webkit-scrollbar-thumb:hover {
-    background: #e56700;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .order-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-    }
-    
-    .order-header > div:first-child {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 5px;
-    }
-    
-    .order-details .detail-table td:nth-child(3) {
-        max-width: 150px;
-    }
-}
-
-/* Style cho các modal lớn */
-#provinceDetailModal .detail-table th,
-#nppDetailModal .detail-table th,
-#nppByProductModal .detail-table th {
-    position: sticky;
-    top: 0;
-    z-index: 20;
-}
-
-#provinceDetailModal .detail-table td:nth-child(2) {
-    text-align: left;
-    max-width: 500px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-#nppByProductModal .detail-table td:first-child {
-    text-align: left;
-    font-weight: 500;
+.data-table-header h3 i {
     color: #ff7300;
 }
 
-/* Style cho nút trong bảng */
-.apply-btn i {
-    margin-right: 5px;
+/* Header search wrapper */
+.header-search-wrapper {
+    position: relative;
+    min-width: 300px;
 }
 
-/* Hiệu ứng hover cho hàng trong bảng tỉnh */
-#provinceTable tbody tr:hover {
-    background-color: #fff3e0;
+.header-search-wrapper .search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+    font-size: 14px;
+    pointer-events: none;
+    transition: color 0.3s;
+}
+
+.header-search-wrapper input {
+    width: 100%;
+    padding: 10px 35px 10px 40px;
+    border: 1px solid #ddd;
+    border-radius: 25px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+}
+
+.header-search-wrapper input:focus {
+    outline: none;
+    border-color: #ff7300;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(255,115,0,0.1);
+    transform: translateY(-1px);
+}
+
+.header-search-wrapper input:focus + .search-icon {
+    color: #ff7300;
+}
+
+.header-search-wrapper input::placeholder {
+    color: #999;
+    font-style: italic;
+    font-size: 13px;
+}
+
+.header-search-wrapper .clear-search-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #999;
     cursor: pointer;
-    transform: scale(1.01);
-    box-shadow: 0 2px 8px rgba(255,115,0,0.2);
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
     transition: all 0.2s;
+    width: 24px;
+    height: 24px;
+    opacity: 0;
+    visibility: hidden;
 }
 
-/* Badge thông tin */
+.header-search-wrapper:hover .clear-search-btn,
+.header-search-wrapper input:not(:placeholder-shown) ~ .clear-search-btn {
+    opacity: 1;
+    visibility: visible;
+}
+
+.header-search-wrapper .clear-search-btn:hover {
+    background: #ff7300;
+    color: white;
+}
+
+.header-search-wrapper .clear-search-btn i {
+    font-size: 12px;
+}
+
+/* Search result info */
+.search-result-info {
+    margin: 10px 0;
+    padding: 8px 15px;
+    background: #e8f4fd;
+    border-left: 4px solid #ff7300;
+    border-radius: 0 8px 8px 0;
+    font-size: 14px;
+    color: #555;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.search-result-info .count {
+    font-weight: bold;
+    color: #ff7300;
+}
+
+.search-result-info .clear-link {
+    color: #ff7300;
+    cursor: pointer;
+    text-decoration: underline;
+    font-size: 13px;
+}
+
+.search-result-info .clear-link:hover {
+    color: #e56700;
+}
+
+/* Search highlight */
+.search-highlight {
+    background-color: #ffeb3b;
+    color: #000;
+    font-weight: bold;
+    padding: 2px 0;
+    border-radius: 2px;
+    box-shadow: 0 1px 3px rgba(255,193,7,0.3);
+}
+
+/* Province and NPP table hover effects */
+#provinceTable tbody tr,
+#nppTable tbody tr {
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+#provinceTable tbody tr:hover,
+#nppTable tbody tr:hover {
+    background-color: #fff3e0;
+    transform: translateX(5px);
+    box-shadow: -5px 0 0 #ff7300;
+}
+
+/* Badge styles */
 .province-badge {
     display: inline-block;
     padding: 3px 8px;
@@ -659,35 +690,68 @@ tr:hover {
     color: white;
 }
 
-/* Cải thiện hiển thị cho các modal lớn trên màn hình nhỏ */
-@media (max-width: 1200px) {
-    .modal-xxl {
-        max-width: 95% !important;
-    }
-    
-    .modal-large {
-        max-width: 95% !important;
-    }
-    
-    .modal-xl {
-        max-width: 95% !important;
-    }
-}
-
+/* Responsive styles */
 @media (max-width: 768px) {
-    .modal-xxl,
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .full-width-chart {
+        grid-column: span 1;
+    }
+    
+    .filter-section {
+        flex-direction: column;
+    }
+    
+    .filter-group {
+        width: 100%;
+    }
+    
+    .modal-content {
+        margin: 10% auto;
+        width: 95%;
+    }
+    
     .modal-large,
-    .modal-xl {
+    .modal-xl,
+    .modal-xxl {
         width: 98% !important;
-        margin: 2% auto;
+        margin: 5% auto;
+    }
+    
+    .data-table-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .header-search-wrapper {
+        width: 100%;
+        min-width: auto;
+    }
+    
+    .header-search-wrapper input {
+        padding: 8px 35px 8px 40px;
+    }
+    
+    .order-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .order-header > div:first-child {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    
+    .order-details .detail-table td:nth-child(3) {
+        max-width: 150px;
     }
     
     #provinceDetailModal .detail-table td:nth-child(2) {
         max-width: 200px;
-    }
-    
-    .order-header > div:first-child {
-        font-size: 12px;
     }
     
     .order-header span {
@@ -696,27 +760,10 @@ tr:hover {
     }
 }
 
-/* Tối ưu hiển thị bảng trong modal */
-.modal-body {
-    max-height: 80vh;
-    overflow-y: auto;
-}
-
-.modal-body::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-
-.modal-body::-webkit-scrollbar-track {
-    background: #f0f0f0;
-    border-radius: 4px;
-}
-
-.modal-body::-webkit-scrollbar-thumb {
-    background: #ff7300;
-    border-radius: 4px;
-}
-
-.modal-body::-webkit-scrollbar-thumb:hover {
-    background: #e56700;
+@media (max-width: 1200px) {
+    .modal-xxl,
+    .modal-large,
+    .modal-xl {
+        max-width: 95% !important;
+    }
 }

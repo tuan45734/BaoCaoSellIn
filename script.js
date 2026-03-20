@@ -1,4 +1,6 @@
 // script.js
+let provinceSearchTerm = '';
+let nppSearchTerm = '';
 let charts = {};
 let filteredData = [];
 let provinceFilter = {
@@ -15,10 +17,67 @@ document.addEventListener('DOMContentLoaded', function () {
     initializeDatePickers();
     filteredData = [...salesData];
     initializeProvinceFilters();
-    initializeNPPFilters(); // Khởi tạo NPP filters ngay từ đầu
+    initializeNPPFilters();
+    
+    // Khởi tạo tìm kiếm
+    setupProvinceSearch();
+    setupNPPSearch();
+    
     updateAll();
 });
+function removeDiacritics(str) {
+    const accents = 'àáảãạâầấẩẫậăằắẳẵặèéẻẽẹêềếểễệđìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵ';
+    const noAccents = 'aaaaaaaaaaaaaaaaaeeeeeeeeeeediiiiiooooooooooooooooouuuuuuuuuuuyyyyy';
+    
+    return str.toLowerCase()
+        .split('')
+        .map(char => {
+            const index = accents.indexOf(char);
+            return index !== -1 ? noAccents[index] : char;
+        })
+        .join('');
+}
 
+// Cập nhật hàm xử lý tìm kiếm tỉnh
+function setupProvinceSearch() {
+    const searchInput = document.getElementById('provinceSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            provinceSearchTerm = removeDiacritics(e.target.value.trim());
+            updateProvinceTable();
+        });
+    }
+}
+
+// Hàm xóa tìm kiếm tỉnh
+function clearProvinceSearch() {
+    const searchInput = document.getElementById('provinceSearch');
+    if (searchInput) {
+        searchInput.value = '';
+        provinceSearchTerm = '';
+        updateProvinceTable();
+    }
+}
+
+function setupNPPSearch() {
+    const searchInput = document.getElementById('nppSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            nppSearchTerm = removeDiacritics(e.target.value.trim());
+            updateNPPTable();
+        });
+    }
+}
+
+// Hàm xóa tìm kiếm NPP
+function clearNPPSearch() {
+    const searchInput = document.getElementById('nppSearch');
+    if (searchInput) {
+        searchInput.value = '';
+        nppSearchTerm = '';
+        updateNPPTable();
+    }
+}
 function parseDate(dateStr) {
     if (!dateStr) return null;
     const parts = dateStr.split('/');
@@ -1099,8 +1158,8 @@ function updateBarChartNPPTop() {
 function updateTables() {
     updateRegionTable();
     updateAreaTable();
-    updateProvinceTable();
-    updateNPPData(); // Thay đổi ở đây
+    updateProvinceTable(); // Đã tích hợp tìm kiếm
+    updateNPPTable(); // Đã tích hợp tìm kiếm
 }
 
 function updateRegionTable() {
@@ -1428,7 +1487,7 @@ function updateProvinceTable() {
                 soSanPham: new Set(),
                 mien: item.mien,
                 khuVuc: item.maKhuVuc,
-                items: [] // Lưu tất cả items để dùng cho popup
+                items: []
             };
         }
         provinceData[tinh].doanhSoBan += item.doanhSoBan || 0;
@@ -1444,23 +1503,55 @@ function updateProvinceTable() {
         provinceData[tinh].items.push(item);
     });
 
-    let html = '<h3><i class="fas fa-city"></i> Thống kê theo tỉnh (Click vào tỉnh để xem chi tiết sản phẩm)</h3>';
+    // Lọc dữ liệu theo từ khóa tìm kiếm
+    let filteredProvinces = Object.entries(provinceData);
+    if (provinceSearchTerm) {
+    filteredProvinces = filteredProvinces.filter(([tinh]) => 
+        removeDiacritics(tinh.toLowerCase()).includes(provinceSearchTerm)
+    );
+}
     
+    // Tạo HTML cho bảng
+    let html = '';
+    
+    // Thêm thông tin lọc nếu có
     let filterInfo = [];
     if (provinceFilter.mien) filterInfo.push(`Miền: ${provinceFilter.mien}`);
     if (provinceFilter.khuVuc) filterInfo.push(`Khu vực: ${provinceFilter.khuVuc}`);
     
     if (filterInfo.length > 0) {
-        html += `<p style="margin-bottom: 10px; color: #ff7300;"><i class="fas fa-info-circle"></i> Đang lọc: ${filterInfo.join(' - ')}</p>`;
+        html += `<div class="search-result-info">
+            <span><i class="fas fa-filter"></i> Đang lọc: ${filterInfo.join(' - ')}</span>
+        </div>`;
+    }
+    
+    // Thêm thông tin kết quả tìm kiếm
+    if (provinceSearchTerm) {
+        html += `<div class="search-result-info">
+            <span>
+                <i class="fas fa-search"></i> Tìm kiếm "<strong>${provinceSearchTerm}</strong>": 
+                <span class="count">${filteredProvinces.length}</span> tỉnh được tìm thấy
+            </span>
+            <span class="clear-link" onclick="clearProvinceSearch()">
+                <i class="fas fa-times"></i> Xóa tìm kiếm
+            </span>
+        </div>`;
     }
     
     html += '<table><thead><tr><th>Tỉnh</th><th>Miền</th><th>Khu vực</th><th>SL sản phẩm</th><th>Tổng số lượng</th><th>Doanh số bán</th><th>Chiết khấu</th><th>Doanh thu thuần</th><th>Số đơn hàng</th></tr></thead><tbody>';
     
-    Object.entries(provinceData)
+    filteredProvinces
         .sort((a, b) => b[1].doanhThuThuan - a[1].doanhThuThuan)
         .forEach(([tinh, data]) => {
+            // Highlight từ khóa tìm kiếm nếu có
+            let displayTinh = tinh;
+            if (provinceSearchTerm && tinh.toLowerCase().includes(provinceSearchTerm)) {
+                const regex = new RegExp(`(${provinceSearchTerm})`, 'gi');
+                displayTinh = tinh.replace(regex, '<span class="search-highlight">$1</span>');
+            }
+            
             html += `<tr onclick="showProvinceDetailModal('${tinh.replace(/'/g, "\\'")}')" style="cursor: pointer;">
-                <td><i class="fas fa-map-marker-alt" style="color: #ff7300; margin-right: 5px;"></i>${tinh}</td>
+                <td><i class="fas fa-map-marker-alt" style="color: #ff7300; margin-right: 5px;"></i>${displayTinh}</td>
                 <td>${data.mien}</td>
                 <td>${data.khuVuc}</td>
                 <td>${formatNumber(data.soSanPham.size)}</td>
@@ -1472,9 +1563,14 @@ function updateProvinceTable() {
             </tr>`;
         });
     
+    if (filteredProvinces.length === 0) {
+        html += '<tr><td colspan="9" style="text-align: center; padding: 40px;"><i class="fas fa-search" style="font-size: 40px; color: #ddd; margin-bottom: 10px; display: block;"></i>Không tìm thấy tỉnh nào phù hợp với từ khóa "<strong>' + provinceSearchTerm + '</strong>"</td></tr>';
+    }
+    
     html += '</tbody></table>';
     document.getElementById('provinceTable').innerHTML = html;
 }
+
 
 function updateNPPTable() {
     const data = getNPPFilteredData();
@@ -1489,7 +1585,8 @@ function updateNPPTable() {
                 doanhThuThuan: 0,
                 soDonHang: new Set(),
                 mien: item.mien,
-                tinh: item.tinh
+                tinh: item.tinh,
+                khuVuc: item.maKhuVuc
             };
         }
         nppData[npp].doanhSoBan += item.doanhSoBan || 0;
@@ -1500,25 +1597,58 @@ function updateNPPTable() {
         }
     });
 
-    let html = '<h3><i class="fas fa-users"></i> Thống kê theo NPP (Click vào NPP để xem chi tiết)</h3>';
+    // Lọc dữ liệu theo từ khóa tìm kiếm
+    let filteredNPP = Object.entries(nppData);
+  if (nppSearchTerm) {
+    filteredNPP = filteredNPP.filter(([npp]) => 
+        removeDiacritics(npp.toLowerCase()).includes(nppSearchTerm)
+    );
+}
     
+    // Tạo HTML cho bảng
+    let html = '';
+    
+    // Thêm thông tin lọc nếu có
     let filterInfo = [];
     if (nppFilter.mien) filterInfo.push(`Miền: ${nppFilter.mien}`);
     if (nppFilter.khuVuc) filterInfo.push(`Khu vực: ${nppFilter.khuVuc}`);
     if (nppFilter.tinh) filterInfo.push(`Tỉnh: ${nppFilter.tinh}`);
     
     if (filterInfo.length > 0) {
-        html += `<p style="margin-bottom: 10px; color: #4ecdc4;"><i class="fas fa-info-circle"></i> Đang lọc: ${filterInfo.join(' - ')}</p>`;
+        html += `<div class="search-result-info">
+            <span><i class="fas fa-filter"></i> Đang lọc: ${filterInfo.join(' - ')}</span>
+        </div>`;
     }
     
-    html += '<table><thead><tr><th>NPP</th><th>Miền</th><th>Tỉnh</th><th>Doanh số bán</th><th>Chiết khấu</th><th>Doanh thu thuần</th><th>Số đơn hàng</th></tr></thead><tbody>';
+    // Thêm thông tin kết quả tìm kiếm
+    if (nppSearchTerm) {
+        html += `<div class="search-result-info">
+            <span>
+                <i class="fas fa-search"></i> Tìm kiếm "<strong>${nppSearchTerm}</strong>": 
+                <span class="count">${filteredNPP.length}</span> NPP được tìm thấy
+            </span>
+            <span class="clear-link" onclick="clearNPPSearch()">
+                <i class="fas fa-times"></i> Xóa tìm kiếm
+            </span>
+        </div>`;
+    }
     
-    Object.entries(nppData)
+    html += '<table><thead><tr><th>NPP</th><th>Miền</th><th>Khu vực</th><th>Tỉnh</th><th>Doanh số bán</th><th>Chiết khấu</th><th>Doanh thu thuần</th><th>Số đơn hàng</th></tr></thead><tbody>';
+    
+    filteredNPP
         .sort((a, b) => b[1].doanhThuThuan - a[1].doanhThuThuan)
         .forEach(([npp, data]) => {
+            // Highlight từ khóa tìm kiếm nếu có
+            let displayNPP = npp;
+            if (nppSearchTerm && npp.toLowerCase().includes(nppSearchTerm)) {
+                const regex = new RegExp(`(${nppSearchTerm})`, 'gi');
+                displayNPP = npp.replace(regex, '<span class="search-highlight">$1</span>');
+            }
+            
             html += `<tr onclick="showNPPDetailModal('${npp.replace(/'/g, "\\'")}')" style="cursor: pointer;">
-                <td>${npp}</td>
+                <td>${displayNPP}</td>
                 <td>${data.mien}</td>
+                <td>${data.khuVuc}</td>
                 <td>${data.tinh}</td>
                 <td>${formatFullNumber(data.doanhSoBan)}</td>
                 <td>${formatFullNumber(data.chietKhau)}</td>
@@ -1526,6 +1656,10 @@ function updateNPPTable() {
                 <td>${formatNumber(data.soDonHang.size)}</td>
             </tr>`;
         });
+    
+    if (filteredNPP.length === 0) {
+        html += '<tr><td colspan="8" style="text-align: center; padding: 40px;"><i class="fas fa-search" style="font-size: 40px; color: #ddd; margin-bottom: 10px; display: block;"></i>Không tìm thấy NPP nào phù hợp với từ khóa "<strong>' + nppSearchTerm + '</strong>"</td></tr>';
+    }
     
     html += '</tbody></table>';
     document.getElementById('nppTable').innerHTML = html;

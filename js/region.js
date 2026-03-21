@@ -14,9 +14,43 @@ function updateBarChartMienDetail() {
     const ctx = document.getElementById('barChartMienDetail').getContext('2d');
     const mienData = {};
     
+    // Tính tổng doanh số theo miền
     filteredData.forEach(item => {
         const mien = item.mien;
         mienData[mien] = (mienData[mien] || 0) + (item.doanhSoBan || 0);
+    });
+    
+    // Lấy danh sách các ngành hàng
+    const nganhHangs = [...new Set(filteredData.map(item => item.nganhHang))];
+    
+    // Tạo dữ liệu chi tiết theo ngành hàng cho từng miền
+    const nganhDetailByMien = {};
+    const totalQuantityByMien = {};
+    const miens = Object.keys(mienData);
+    
+    miens.forEach(mien => {
+        nganhDetailByMien[mien] = {};
+        totalQuantityByMien[mien] = 0;
+        nganhHangs.forEach(nganh => {
+            nganhDetailByMien[mien][nganh] = {
+                doanhSo: 0,
+                soLuong: 0
+            };
+        });
+    });
+    
+    // Tính tổng doanh số và số lượng theo ngành hàng và miền
+    filteredData.forEach(item => {
+        const mien = item.mien;
+        const nganh = item.nganhHang;
+        const doanhSo = item.doanhSoBan || 0;
+        const soLuong = item.soLuong || 0;
+        
+        if (nganhDetailByMien[mien] && nganhDetailByMien[mien][nganh]) {
+            nganhDetailByMien[mien][nganh].doanhSo += doanhSo;
+            nganhDetailByMien[mien][nganh].soLuong += soLuong;
+            totalQuantityByMien[mien] += soLuong;
+        }
     });
 
     regionCharts.barMienDetail = new Chart(ctx, {
@@ -51,8 +85,36 @@ function updateBarChartMienDetail() {
                     bodyFont: { size: 13 },
                     titleFont: { size: 13 },
                     callbacks: {
+                        title: function(tooltipItems) {
+                            return tooltipItems[0].label;
+                        },
                         label: function(context) {
-                            return formatMoney(context.raw);
+                            const mien = context.label;
+                            const totalDoanhSo = context.raw;
+                            const totalSoLuong = totalQuantityByMien[mien] || 0;
+                            
+                            const nganhDetails = nganhDetailByMien[mien];
+                            if (!nganhDetails) return [];
+                            
+                            const sortedNganh = Object.entries(nganhDetails)
+                                .sort((a, b) => b[1].doanhSo - a[1].doanhSo)
+                                .filter(([_, data]) => data.doanhSo > 0);
+                            
+                            const lines = [];
+                            lines.push(`Tổng doanh số: ${formatMoney(totalDoanhSo)}`);
+                            lines.push(`Tổng số lượng: ${formatNumber(totalSoLuong)}`);
+                            lines.push(``);
+                            
+                            sortedNganh.forEach(([nganh, data]) => {
+                                const percentDoanhSo = ((data.doanhSo / totalDoanhSo) * 100).toFixed(1);
+                                const percentSoLuong = ((data.soLuong / totalSoLuong) * 100).toFixed(1);
+                                lines.push(`📊 ${nganh}:`);
+                                lines.push(`   Doanh số: ${formatMoney(data.doanhSo)} (${percentDoanhSo}%)`);
+                                lines.push(`   Số lượng: ${formatNumber(data.soLuong)} (${percentSoLuong}%)`);
+                                lines.push(``);
+                            });
+                            
+                            return lines;
                         }
                     }
                 }
@@ -69,6 +131,7 @@ function updateBarChartMienDetail() {
                     }
                 },
                 x: {
+                    title: { display: true, text: 'Miền', font: { size: 13, weight: 'bold' } },
                     ticks: {
                         maxRotation: 30,
                         minRotation: 30,
@@ -102,19 +165,40 @@ function updateRegionTable() {
         }
     });
 
-    let html = '<h3><i class="fas fa-map-marker-alt"></i> Thống kê theo miền</h3>';
-    html += '<table><thead><tr><th>Miền</th><th>Doanh số bán</th><th>Chiết khấu</th><th>Doanh thu thuần</th><th>Số đơn hàng</th></tr></thead><tbody>';
+    let html = `
+        <div class="data-table">
+            <h3><i class="fas fa-map-marker-alt"></i> Thống kê theo miền</h3>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Miền</th>
+                            <th>Doanh số bán</th>
+                            <th>Chiết khấu</th>
+                            <th>Doanh thu thuần</th>
+                            <th>Số đơn hàng</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+    `;
     
     Object.entries(mienData).forEach(([mien, data]) => {
-        html += `<tr>
-            <td>${mien}</td>
-            <td>${formatFullNumber(data.doanhSoBan)}</td>
-            <td>${formatFullNumber(data.chietKhau)}</td>
-            <td>${formatFullNumber(data.doanhThuThuan)}</td>
-            <td>${formatNumber(data.soDonHang.size)}</td>
-        </tr>`;
+        html += `
+            <tr>
+                <td>${mien}</td>
+                <td>${formatFullNumber(data.doanhSoBan)}</td>
+                <td>${formatFullNumber(data.chietKhau)}</td>
+                <td>${formatFullNumber(data.doanhThuThuan)}</td>
+                <td>${formatNumber(data.soDonHang.size)}</td>
+            </tr>
+        `;
     });
     
-    html += '</tbody></table>';
+    html += `
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
     document.getElementById('regionTable').innerHTML = html;
 }

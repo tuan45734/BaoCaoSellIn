@@ -68,7 +68,7 @@ function updatePieChartMien() {
             labels: Object.keys(mienData),
             datasets: [{
                 data: Object.values(mienData),
-                backgroundColor: ['#667eea', '#ff7300', '#b10000', '#4ecdc4', '#45b7d1', '#96ceb4']
+                backgroundColor: ['#e78b00', '#bbff00', '#b10000', '#4ecdc4', '#45b7d1', '#96ceb4']
             }]
         },
         options: {
@@ -138,7 +138,7 @@ function updateLineChartNganhHang() {
         totalSoLuongByMien[mien] += (item.soLuong || 0);
     });
     
-    const colors = ['#667eea', '#ff7300', '#b10000', '#4ecdc4', '#45b7d1', '#96ceb4', '#f39c12', '#e74c3c'];
+    const colors = ['#ff7300', '#a7b900', '#b10000', '#4ecdc4', '#45b7d1', '#96ceb4', '#f39c12', '#e74c3c'];
     
     const datasets = nganhHangs.map((nganh, index) => {
         return {
@@ -257,7 +257,7 @@ function updateBarChartKV() {
             datasets: [{
                 label: 'Doanh số bán',
                 data: Object.values(kvData),
-                backgroundColor: '#667eea'
+                backgroundColor: '#ff9216'
             }]
         },
         options: {
@@ -345,7 +345,7 @@ function updateLineChartDaily() {
         return parseDate(a) - parseDate(b);
     });
     
-    const colors = ['#667eea', '#ff7300', '#b10000', '#4ecdc4', '#45b7d1', '#96ceb4'];
+    const colors = ['#ff7300', '#667eea', '#b10000', '#4ecdc4', '#45b7d1', '#96ceb4'];
     
     const datasets = miens.map((mien, index) => {
         return {

@@ -200,9 +200,43 @@ function updateBarChartNPPTop() {
     const data = getNPPFilteredData();
     const nppData = {};
     
+    // Tính tổng doanh số theo NPP
     data.forEach(item => {
         const npp = item.NPP;
         nppData[npp] = (nppData[npp] || 0) + (item.doanhSoBan || 0);
+    });
+    
+    // Lấy danh sách các ngành hàng
+    const nganhHangs = [...new Set(data.map(item => item.nganhHang))];
+    
+    // Tạo dữ liệu chi tiết theo ngành hàng cho từng NPP
+    const nganhDetailByNPP = {};
+    const totalQuantityByNPP = {};
+    const npps = Object.keys(nppData);
+    
+    npps.forEach(npp => {
+        nganhDetailByNPP[npp] = {};
+        totalQuantityByNPP[npp] = 0;
+        nganhHangs.forEach(nganh => {
+            nganhDetailByNPP[npp][nganh] = {
+                doanhSo: 0,
+                soLuong: 0
+            };
+        });
+    });
+    
+    // Tính tổng doanh số và số lượng theo ngành hàng và NPP
+    data.forEach(item => {
+        const npp = item.NPP;
+        const nganh = item.nganhHang;
+        const doanhSo = item.doanhSoBan || 0;
+        const soLuong = item.soLuong || 0;
+        
+        if (nganhDetailByNPP[npp] && nganhDetailByNPP[npp][nganh]) {
+            nganhDetailByNPP[npp][nganh].doanhSo += doanhSo;
+            nganhDetailByNPP[npp][nganh].soLuong += soLuong;
+            totalQuantityByNPP[npp] += soLuong;
+        }
     });
 
     const sortedNPP = Object.entries(nppData)
@@ -248,8 +282,36 @@ function updateBarChartNPPTop() {
                     bodyFont: { size: 13 },
                     titleFont: { size: 13 },
                     callbacks: {
+                        title: function(tooltipItems) {
+                            return tooltipItems[0].label;
+                        },
                         label: function(context) {
-                            return formatMoney(context.raw);
+                            const npp = context.label;
+                            const totalDoanhSo = context.raw;
+                            const totalSoLuong = totalQuantityByNPP[npp] || 0;
+                            
+                            const nganhDetails = nganhDetailByNPP[npp];
+                            if (!nganhDetails) return [];
+                            
+                            const sortedNganh = Object.entries(nganhDetails)
+                                .sort((a, b) => b[1].doanhSo - a[1].doanhSo)
+                                .filter(([_, data]) => data.doanhSo > 0);
+                            
+                            const lines = [];
+                            lines.push(`Tổng doanh số: ${formatMoney(totalDoanhSo)}`);
+                            lines.push(`Tổng số lượng: ${formatNumber(totalSoLuong)}`);
+                            lines.push(``);
+                            
+                            sortedNganh.forEach(([nganh, data]) => {
+                                const percentDoanhSo = ((data.doanhSo / totalDoanhSo) * 100).toFixed(1);
+                                const percentSoLuong = ((data.soLuong / totalSoLuong) * 100).toFixed(1);
+                                lines.push(`📊 ${nganh}:`);
+                                lines.push(`   Doanh số: ${formatMoney(data.doanhSo)} (${percentDoanhSo}%)`);
+                                lines.push(`   Số lượng: ${formatNumber(data.soLuong)} (${percentSoLuong}%)`);
+                                lines.push(``);
+                            });
+                            
+                            return lines;
                         }
                     }
                 }
@@ -266,6 +328,7 @@ function updateBarChartNPPTop() {
                     }
                 },
                 x: {
+                    title: { display: true, text: 'NPP', font: { size: 13, weight: 'bold' } },
                     ticks: {
                         maxRotation: 45,
                         minRotation: 45,
@@ -335,7 +398,25 @@ function updateNPPTable() {
         </div>`;
     }
     
-    html += '<div class="data-table"><table><thead><tr><th>NPP</th><th>Miền</th><th>Khu vực</th><th>Tỉnh</th><th>Doanh số bán</th><th>Chiết khấu</th><th>Doanh thu thuần</th><th>Số đơn hàng</th></tr></thead><tbody>';
+    // Tạo bảng với cấu trúc HTML đúng
+    html += `
+        <div class="data-table">
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>NPP</th>
+                            <th>Miền</th>
+                            <th>Khu vực</th>
+                            <th>Tỉnh</th>
+                            <th>Doanh số bán</th>
+                            <th>Chiết khấu</th>
+                            <th>Doanh thu thuần</th>
+                            <th>Số đơn hàng</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+    `;
     
     filteredNPP
         .sort((a, b) => b[1].doanhThuThuan - a[1].doanhThuThuan)
@@ -346,23 +427,38 @@ function updateNPPTable() {
                 displayNPP = npp.replace(regex, '<span class="search-highlight">$1</span>');
             }
             
-            html += `<tr onclick="showNPPDetailModal('${npp.replace(/'/g, "\\'")}')" style="cursor: pointer;">
-                <td>${displayNPP}</td>
-                <td>${data.mien}</td>
-                <td>${data.khuVuc}</td>
-                <td>${data.tinh}</td>
-                <td>${formatFullNumber(data.doanhSoBan)}</td>
-                <td>${formatFullNumber(data.chietKhau)}</td>
-                <td>${formatFullNumber(data.doanhThuThuan)}</td>
-                <td>${formatNumber(data.soDonHang.size)}</td>
-            </tr>`;
+            html += `
+                <tr onclick="showNPPDetailModal('${npp.replace(/'/g, "\\'")}')" style="cursor: pointer;">
+                    <td>${displayNPP}</td>
+                    <td>${data.mien}</td>
+                    <td>${data.khuVuc}</td>
+                    <td>${data.tinh}</td>
+                    <td>${formatFullNumber(data.doanhSoBan)}</td>
+                    <td>${formatFullNumber(data.chietKhau)}</td>
+                    <td>${formatFullNumber(data.doanhThuThuan)}</td>
+                    <td>${formatNumber(data.soDonHang.size)}</td>
+                </tr>
+            `;
         });
     
     if (filteredNPP.length === 0) {
-        html += '<tr><td colspan="8" style="text-align: center; padding: 40px;"><i class="fas fa-search" style="font-size: 40px; color: #ddd; margin-bottom: 10px; display: block;"></i>Không tìm thấy NPP nào phù hợp với từ khóa "<strong>' + nppSearchTerm + '</strong>"</td></tr>';
+        html += `
+            <tr>
+                <td colspan="8" style="text-align: center; padding: 40px;">
+                    <i class="fas fa-search" style="font-size: 40px; color: #ddd; margin-bottom: 10px; display: block;"></i>
+                    Không tìm thấy NPP nào phù hợp với từ khóa "<strong>${nppSearchTerm}</strong>"
+                </td>
+            </tr>
+        `;
     }
     
-    html += '</tbody></table></div>';
+    html += `
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+    
     document.getElementById('nppTable').innerHTML = html;
 }
 

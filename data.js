@@ -33592,9 +33592,6 @@ function getNganhHang(tenSanPham) {
         lowerName.includes('hũ đùi')) {
         return 'Bim Quẩy';
     }
-    // if (lowerName.includes('cá cơm')) {
-    //     return 'Hàng Ướt';
-    // }
     if (lowerName.includes('snack')) {
         return 'Hàng Ướt';
     }

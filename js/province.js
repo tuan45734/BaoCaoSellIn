@@ -125,9 +125,43 @@ function updateBarChartProvince() {
     const data = getProvinceFilteredData();
     const provinceData = {};
     
+    // Tính tổng doanh số theo tỉnh
     data.forEach(item => {
         const tinh = item.tinh;
         provinceData[tinh] = (provinceData[tinh] || 0) + (item.doanhSoBan || 0);
+    });
+    
+    // Lấy danh sách các ngành hàng
+    const nganhHangs = [...new Set(data.map(item => item.nganhHang))];
+    
+    // Tạo dữ liệu chi tiết theo ngành hàng cho từng tỉnh
+    const nganhDetailByTinh = {};
+    const totalQuantityByTinh = {};
+    const tinhs = Object.keys(provinceData);
+    
+    tinhs.forEach(tinh => {
+        nganhDetailByTinh[tinh] = {};
+        totalQuantityByTinh[tinh] = 0;
+        nganhHangs.forEach(nganh => {
+            nganhDetailByTinh[tinh][nganh] = {
+                doanhSo: 0,
+                soLuong: 0
+            };
+        });
+    });
+    
+    // Tính tổng doanh số và số lượng theo ngành hàng và tỉnh
+    data.forEach(item => {
+        const tinh = item.tinh;
+        const nganh = item.nganhHang;
+        const doanhSo = item.doanhSoBan || 0;
+        const soLuong = item.soLuong || 0;
+        
+        if (nganhDetailByTinh[tinh] && nganhDetailByTinh[tinh][nganh]) {
+            nganhDetailByTinh[tinh][nganh].doanhSo += doanhSo;
+            nganhDetailByTinh[tinh][nganh].soLuong += soLuong;
+            totalQuantityByTinh[tinh] += soLuong;
+        }
     });
 
     const sortedProvinces = Object.entries(provinceData)
@@ -166,8 +200,36 @@ function updateBarChartProvince() {
                     bodyFont: { size: 13 },
                     titleFont: { size: 13 },
                     callbacks: {
+                        title: function(tooltipItems) {
+                            return tooltipItems[0].label;
+                        },
                         label: function(context) {
-                            return formatMoney(context.raw);
+                            const tinh = context.label;
+                            const totalDoanhSo = context.raw;
+                            const totalSoLuong = totalQuantityByTinh[tinh] || 0;
+                            
+                            const nganhDetails = nganhDetailByTinh[tinh];
+                            if (!nganhDetails) return [];
+                            
+                            const sortedNganh = Object.entries(nganhDetails)
+                                .sort((a, b) => b[1].doanhSo - a[1].doanhSo)
+                                .filter(([_, data]) => data.doanhSo > 0);
+                            
+                            const lines = [];
+                            lines.push(`Tổng doanh số: ${formatMoney(totalDoanhSo)}`);
+                            lines.push(`Tổng số lượng: ${formatNumber(totalSoLuong)}`);
+                            lines.push(``);
+                            
+                            sortedNganh.forEach(([nganh, data]) => {
+                                const percentDoanhSo = ((data.doanhSo / totalDoanhSo) * 100).toFixed(1);
+                                const percentSoLuong = ((data.soLuong / totalSoLuong) * 100).toFixed(1);
+                                lines.push(`📊 ${nganh}:`);
+                                lines.push(`   Doanh số: ${formatMoney(data.doanhSo)} (${percentDoanhSo}%)`);
+                                lines.push(`   Số lượng: ${formatNumber(data.soLuong)} (${percentSoLuong}%)`);
+                                lines.push(``);
+                            });
+                            
+                            return lines;
                         }
                     }
                 }
@@ -184,6 +246,7 @@ function updateBarChartProvince() {
                     }
                 },
                 x: {
+                    title: { display: true, text: 'Tỉnh', font: { size: 13, weight: 'bold' } },
                     ticks: {
                         maxRotation: 45,
                         minRotation: 45,
@@ -259,7 +322,26 @@ function updateProvinceTable() {
         </div>`;
     }
     
-    html += '<div class="data-table"><table><thead><tr><th>Tỉnh</th><th>Miền</th><th>Khu vực</th><th>SL sản phẩm</th><th>Tổng số lượng</th><th>Doanh số bán</th><th>Chiết khấu</th><th>Doanh thu thuần</th><th>Số đơn hàng</th></tr></thead><tbody>';
+    // Tạo bảng với cấu trúc HTML đúng
+    html += `
+        <div class="data-table">
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tỉnh</th>
+                            <th>Miền</th>
+                            <th>Khu vực</th>
+                            <th>SL sản phẩm</th>
+                            <th>Tổng số lượng</th>
+                            <th>Doanh số bán</th>
+                            <th>Chiết khấu</th>
+                            <th>Doanh thu thuần</th>
+                            <th>Số đơn hàng</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+    `;
     
     filteredProvinces
         .sort((a, b) => b[1].doanhThuThuan - a[1].doanhThuThuan)
@@ -270,24 +352,39 @@ function updateProvinceTable() {
                 displayTinh = tinh.replace(regex, '<span class="search-highlight">$1</span>');
             }
             
-            html += `<tr onclick="showProvinceDetailModal('${tinh.replace(/'/g, "\\'")}')" style="cursor: pointer;">
-                <td><i class="fas fa-map-marker-alt" style="color: #ff7300; margin-right: 5px;"></i>${displayTinh}</td>
-                <td>${data.mien}</td>
-                <td>${data.khuVuc}</td>
-                <td>${formatNumber(data.soSanPham.size)}</td>
-                <td>${formatNumber(data.soLuong)}</td>
-                <td>${formatFullNumber(data.doanhSoBan)}</td>
-                <td>${formatFullNumber(data.chietKhau)}</td>
-                <td>${formatFullNumber(data.doanhThuThuan)}</td>
-                <td>${formatNumber(data.soDonHang.size)}</td>
-            </tr>`;
+            html += `
+                <tr onclick="showProvinceDetailModal('${tinh.replace(/'/g, "\\'")}')" style="cursor: pointer;">
+                    <td><i class="fas fa-map-marker-alt" style="color: #ff7300; margin-right: 5px;"></i>${displayTinh}</td>
+                    <td>${data.mien}</td>
+                    <td>${data.khuVuc}</td>
+                    <td>${formatNumber(data.soSanPham.size)}</td>
+                    <td>${formatNumber(data.soLuong)}</td>
+                    <td>${formatFullNumber(data.doanhSoBan)}</td>
+                    <td>${formatFullNumber(data.chietKhau)}</td>
+                    <td>${formatFullNumber(data.doanhThuThuan)}</td>
+                    <td>${formatNumber(data.soDonHang.size)}</td>
+                </tr>
+            `;
         });
     
     if (filteredProvinces.length === 0) {
-        html += '<tr><td colspan="9" style="text-align: center; padding: 40px;"><i class="fas fa-search" style="font-size: 40px; color: #ddd; margin-bottom: 10px; display: block;"></i>Không tìm thấy tỉnh nào phù hợp với từ khóa "<strong>' + provinceSearchTerm + '</strong>"</td></tr>';
+        html += `
+            <tr>
+                <td colspan="9" style="text-align: center; padding: 40px;">
+                    <i class="fas fa-search" style="font-size: 40px; color: #ddd; margin-bottom: 10px; display: block;"></i>
+                    Không tìm thấy tỉnh nào phù hợp với từ khóa "<strong>${provinceSearchTerm}</strong>"
+                </td>
+            </tr>
+        `;
     }
     
-    html += '</tbody></table></div>';
+    html += `
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+    
     document.getElementById('provinceTable').innerHTML = html;
 }
 

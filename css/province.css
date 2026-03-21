@@ -1,0 +1,247 @@
+/* css/province.css */
+.data-table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 15px 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.data-table-header h3 {
+    margin: 0;
+    color: #333;
+    font-size: 1.2em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.data-table-header h3 i {
+    color: #ff7300;
+    font-size: 1.3em;
+}
+
+.header-search-wrapper {
+    position: relative;
+    min-width: 350px;
+}
+
+.header-search-wrapper .search-icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+    font-size: 16px;
+    pointer-events: none;
+    transition: color 0.3s;
+}
+
+.header-search-wrapper input {
+    width: 100%;
+    padding: 12px 45px 12px 45px;
+    border: 2px solid #e0e0e0;
+    border-radius: 30px;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+}
+
+.header-search-wrapper input:focus {
+    outline: none;
+    border-color: #ff7300;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(255,115,0,0.1);
+}
+
+.header-search-wrapper input:focus + .search-icon {
+    color: #ff7300;
+}
+
+.header-search-wrapper input::placeholder {
+    color: #999;
+    font-style: italic;
+    font-size: 14px;
+}
+
+.header-search-wrapper .clear-search-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s;
+    width: 34px;
+    height: 34px;
+    opacity: 0;
+    visibility: hidden;
+    background: #f0f0f0;
+}
+
+.header-search-wrapper:hover .clear-search-btn,
+.header-search-wrapper input:not(:placeholder-shown) ~ .clear-search-btn {
+    opacity: 1;
+    visibility: visible;
+}
+
+.header-search-wrapper .clear-search-btn:hover {
+    background: #ff7300;
+    color: white;
+    transform: translateY(-50%) scale(1.1);
+}
+
+.search-result-info {
+    margin: 15px 0;
+    padding: 12px 20px;
+    background: #e8f4fd;
+    border-left: 6px solid #ff7300;
+    border-radius: 0 10px 10px 0;
+    font-size: 15px;
+    color: #333;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.search-result-info .count {
+    font-weight: bold;
+    color: #ff7300;
+    font-size: 1.2em;
+    margin: 0 5px;
+}
+
+.search-result-info .clear-link {
+    color: #ff7300;
+    cursor: pointer;
+    text-decoration: underline;
+    font-size: 14px;
+    padding: 5px 10px;
+    border-radius: 5px;
+    transition: all 0.2s;
+}
+
+.search-result-info .clear-link:hover {
+    background: #ff7300;
+    color: white;
+    text-decoration: none;
+}
+
+.search-highlight {
+    background-color: #ffeb3b;
+    color: #000;
+    font-weight: bold;
+    padding: 2px 4px;
+    border-radius: 3px;
+    box-shadow: 0 1px 3px rgba(255,193,7,0.3);
+}
+
+#provinceTable .data-table {
+    background: white;
+    padding: 0;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    margin-top: 20px;
+}
+
+#provinceTable table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+}
+
+#provinceTable th {
+    background: linear-gradient(135deg, #667eea 0%, #ff7300 100%);
+    color: white;
+    padding: 15px 12px;
+    font-weight: 600;
+    font-size: 14px;
+    text-align: center;
+    white-space: nowrap;
+    border-bottom: 2px solid #fff;
+}
+
+#provinceTable td {
+    padding: 12px;
+    border-bottom: 1px solid #e0e0e0;
+    text-align: center;
+    font-size: 14px;
+    color: #333;
+}
+
+#provinceTable td:first-child {
+    text-align: left;
+    font-weight: 500;
+    color: #ff7300;
+    padding-left: 15px;
+}
+
+#provinceTable tbody tr {
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+#provinceTable tbody tr:hover {
+    background-color: #fff3e0;
+    transform: translateX(5px);
+    box-shadow: -5px 0 0 #ff7300;
+}
+
+#provinceTable tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+#provinceTable tbody tr:nth-child(even):hover {
+    background-color: #fff3e0;
+}
+
+@media (max-width: 768px) {
+    .data-table-header {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 15px;
+    }
+    
+    .header-search-wrapper {
+        min-width: auto;
+        width: 100%;
+    }
+    
+    #provinceTable {
+        overflow-x: auto;
+    }
+    
+    #provinceTable table {
+        min-width: 1000px;
+    }
+    
+    #provinceTable th {
+        padding: 10px 8px;
+        font-size: 13px;
+    }
+    
+    #provinceTable td {
+        padding: 8px;
+        font-size: 13px;
+    }
+    
+    .search-result-info {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+}

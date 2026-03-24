@@ -373,6 +373,9 @@ function updateNPPTable() {
         );
     }
     
+    // Sắp xếp theo doanh thu thuần giảm dần
+    filteredNPP.sort((a, b) => b[1].doanhThuThuan - a[1].doanhThuThuan);
+    
     let html = '';
     
     let filterInfo = [];
@@ -398,13 +401,14 @@ function updateNPPTable() {
         </div>`;
     }
     
-    // Tạo bảng với cấu trúc HTML đúng
+    // Tạo bảng với cấu trúc HTML đúng - THÊM CỘT STT
     html += `
         <div class="data-table">
             <div style="overflow-x: auto;">
-                <table>
+                <table class="npp-table">
                     <thead>
                         <tr>
+                            <th style="width: 60px;">STT</th>
                             <th>NPP</th>
                             <th>Miền</th>
                             <th>Khu vực</th>
@@ -418,33 +422,32 @@ function updateNPPTable() {
                     <tbody>
     `;
     
-    filteredNPP
-        .sort((a, b) => b[1].doanhThuThuan - a[1].doanhThuThuan)
-        .forEach(([npp, data]) => {
-            let displayNPP = npp;
-            if (nppSearchTerm && removeDiacritics(npp.toLowerCase()).includes(nppSearchTerm)) {
-                const regex = new RegExp(`(${nppSearchTerm})`, 'gi');
-                displayNPP = npp.replace(regex, '<span class="search-highlight">$1</span>');
-            }
-            
-            html += `
-                <tr onclick="showNPPDetailModal('${npp.replace(/'/g, "\\'")}')" style="cursor: pointer;">
-                    <td>${displayNPP}</td>
-                    <td>${data.mien}</td>
-                    <td>${data.khuVuc}</td>
-                    <td>${data.tinh}</td>
-                    <td>${formatFullNumber(data.doanhSoBan)}</td>
-                    <td>${formatFullNumber(data.chietKhau)}</td>
-                    <td>${formatFullNumber(data.doanhThuThuan)}</td>
-                    <td>${formatNumber(data.soDonHang.size)}</td>
-                </tr>
-            `;
-        });
+    filteredNPP.forEach(([npp, data], index) => {
+        let displayNPP = npp;
+        if (nppSearchTerm && removeDiacritics(npp.toLowerCase()).includes(nppSearchTerm)) {
+            const regex = new RegExp(`(${nppSearchTerm})`, 'gi');
+            displayNPP = npp.replace(regex, '<span class="search-highlight">$1</span>');
+        }
+        
+        html += `
+            <tr onclick="showNPPDetailModal('${npp.replace(/'/g, "\\'")}')" style="cursor: pointer;">
+                <td style="text-align: center; font-weight: bold; color: #ff7300;">${index + 1}</td>
+                <td>${displayNPP}</td>
+                <td>${data.mien}</td>
+                <td>${data.khuVuc}</td>
+                <td>${data.tinh}</td>
+                <td style="text-align: right;">${formatFullNumber(data.doanhSoBan)}</td>
+                <td style="text-align: right;">${formatFullNumber(data.chietKhau)}</td>
+                <td style="text-align: right;">${formatFullNumber(data.doanhThuThuan)}</td>
+                <td style="text-align: right;">${formatNumber(data.soDonHang.size)}</td>
+            </tr>
+        `;
+    });
     
     if (filteredNPP.length === 0) {
         html += `
             <tr>
-                <td colspan="8" style="text-align: center; padding: 40px;">
+                <td colspan="9" style="text-align: center; padding: 40px;">
                     <i class="fas fa-search" style="font-size: 40px; color: #ddd; margin-bottom: 10px; display: block;"></i>
                     Không tìm thấy NPP nào phù hợp với từ khóa "<strong>${nppSearchTerm}</strong>"
                 </td>
@@ -501,13 +504,13 @@ function showNPPDetailModal(nppName) {
     
     let html = '<div class="orders-container">';
     
-    Object.entries(ordersByDon).forEach(([maDon, order], index) => {
+    Object.entries(ordersByDon).forEach(([maDon, order], orderIndex) => {
         totalSales += order.tongDoanhSoBan;
         totalDiscount += order.tongChietKhau;
         totalRevenue += order.tongDoanhThuThuan;
         totalQuantity += order.tongSoLuong;
         
-        const orderId = `order-${index}-${maDon.replace(/\s/g, '')}`;
+        const orderId = `order-${orderIndex}-${maDon.replace(/\s/g, '')}`;
         
         html += `
             <div class="order-card">
@@ -527,6 +530,7 @@ function showNPPDetailModal(nppName) {
                     <table class="detail-table">
                         <thead>
                             <tr>
+                                <th>STT</th>
                                 <th>Ngày</th>
                                 <th>Mã đơn</th>
                                 <th>Tên sản phẩm</th>
@@ -539,16 +543,17 @@ function showNPPDetailModal(nppName) {
                         <tbody>
         `;
         
-        order.items.forEach(item => {
+        order.items.forEach((item, itemIndex) => {
             html += `
                 <tr>
+                    <td style="text-align: center;">${itemIndex + 1}</td>
                     <td>${item.ngay || ''}</td>
                     <td>${item.maDon || ''}</td>
                     <td style="text-align: left;">${item.ten || ''}</td>
-                    <td>${formatNumber(item.soLuong || 0)}</td>
-                    <td>${formatFullNumber(item.doanhSoBan)}</td>
-                    <td>${formatFullNumber(item.chietKhau)}</td>
-                    <td>${formatFullNumber(item.doanhThuThuan)}</td>
+                    <td style="text-align: right;">${formatNumber(item.soLuong || 0)}</td>
+                    <td style="text-align: right;">${formatFullNumber(item.doanhSoBan)}</td>
+                    <td style="text-align: right;">${formatFullNumber(item.chietKhau)}</td>
+                    <td style="text-align: right;">${formatFullNumber(item.doanhThuThuan)}</td>
                 </tr>
             `;
         });

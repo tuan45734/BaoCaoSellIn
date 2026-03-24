@@ -1,3 +1,4 @@
+// js/main.js
 let filteredData = [];
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -6,23 +7,6 @@ document.addEventListener('DOMContentLoaded', function () {
     filteredData = [...enrichedSalesData];
     updateAll();
 });
-
-function applyFilters() {
-    const startDate = document.getElementById('startDate').value;
-    const endDate = document.getElementById('endDate').value;
-
-    filteredData = enrichedSalesData.filter(item => {
-        if (startDate && endDate) {
-            const itemDate = parseDate(item.ngay);
-            const start = parseDate(startDate);
-            const end = parseDate(endDate);
-            if (itemDate < start || itemDate > end) return false;
-        }
-        return true;
-    });
-
-    updateAll();
-}
 
 function initializeDatePickers() {
     flatpickr.localize({
@@ -55,19 +39,21 @@ function initializeDatePickers() {
     });
 }
 
+// Chỉ giữ 1 hàm applyFilters - sử dụng enrichedSalesData
 function applyFilters() {
     const startDate = document.getElementById('startDate').value;
     const endDate = document.getElementById('endDate').value;
 
-    filteredData = salesData.filter(item => {
-        if (startDate && endDate) {
+    if (startDate && endDate) {
+        filteredData = enrichedSalesData.filter(item => {
             const itemDate = parseDate(item.ngay);
             const start = parseDate(startDate);
             const end = parseDate(endDate);
-            if (itemDate < start || itemDate > end) return false;
-        }
-        return true;
-    });
+            return itemDate >= start && itemDate <= end;
+        });
+    } else {
+        filteredData = [...enrichedSalesData];
+    }
 
     updateAll();
 }

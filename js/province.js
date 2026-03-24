@@ -298,6 +298,9 @@ function updateProvinceTable() {
         );
     }
     
+    // Sắp xếp theo doanh thu thuần giảm dần
+    filteredProvinces.sort((a, b) => b[1].doanhThuThuan - a[1].doanhThuThuan);
+    
     let html = '';
     
     let filterInfo = [];
@@ -322,13 +325,14 @@ function updateProvinceTable() {
         </div>`;
     }
     
-    // Tạo bảng với cấu trúc HTML đúng
+    // Tạo bảng với cấu trúc HTML đúng - THÊM CỘT STT
     html += `
         <div class="data-table">
             <div style="overflow-x: auto;">
-                <table>
+                <table class="province-table">
                     <thead>
                         <tr>
+                            <th style="width: 60px;">STT</th>
                             <th>Tỉnh</th>
                             <th>Miền</th>
                             <th>Khu vực</th>
@@ -343,34 +347,33 @@ function updateProvinceTable() {
                     <tbody>
     `;
     
-    filteredProvinces
-        .sort((a, b) => b[1].doanhThuThuan - a[1].doanhThuThuan)
-        .forEach(([tinh, data]) => {
-            let displayTinh = tinh;
-            if (provinceSearchTerm && removeDiacritics(tinh.toLowerCase()).includes(provinceSearchTerm)) {
-                const regex = new RegExp(`(${provinceSearchTerm})`, 'gi');
-                displayTinh = tinh.replace(regex, '<span class="search-highlight">$1</span>');
-            }
-            
-            html += `
-                <tr onclick="showProvinceDetailModal('${tinh.replace(/'/g, "\\'")}')" style="cursor: pointer;">
-                    <td><i class="fas fa-map-marker-alt" style="color: #ff7300; margin-right: 5px;"></i>${displayTinh}</td>
-                    <td>${data.mien}</td>
-                    <td>${data.khuVuc}</td>
-                    <td>${formatNumber(data.soSanPham.size)}</td>
-                    <td>${formatNumber(data.soLuong)}</td>
-                    <td>${formatFullNumber(data.doanhSoBan)}</td>
-                    <td>${formatFullNumber(data.chietKhau)}</td>
-                    <td>${formatFullNumber(data.doanhThuThuan)}</td>
-                    <td>${formatNumber(data.soDonHang.size)}</td>
-                </tr>
-            `;
-        });
+    filteredProvinces.forEach(([tinh, data], index) => {
+        let displayTinh = tinh;
+        if (provinceSearchTerm && removeDiacritics(tinh.toLowerCase()).includes(provinceSearchTerm)) {
+            const regex = new RegExp(`(${provinceSearchTerm})`, 'gi');
+            displayTinh = tinh.replace(regex, '<span class="search-highlight">$1</span>');
+        }
+        
+        html += `
+            <tr onclick="showProvinceDetailModal('${tinh.replace(/'/g, "\\'")}')" style="cursor: pointer;">
+                <td style="text-align: center; font-weight: bold; color: #ff7300;">${index + 1}</td>
+                <td><i class="fas fa-map-marker-alt" style="color: #ff7300; margin-right: 5px;"></i>${displayTinh}</td>
+                <td>${data.mien}</td>
+                <td>${data.khuVuc}</td>
+                <td style="text-align: right;">${formatNumber(data.soSanPham.size)}</td>
+                <td style="text-align: right;">${formatNumber(data.soLuong)}</td>
+                <td style="text-align: right;">${formatFullNumber(data.doanhSoBan)}</td>
+                <td style="text-align: right;">${formatFullNumber(data.chietKhau)}</td>
+                <td style="text-align: right;">${formatFullNumber(data.doanhThuThuan)}</td>
+                <td style="text-align: right;">${formatNumber(data.soDonHang.size)}</td>
+            </tr>
+        `;
+    });
     
     if (filteredProvinces.length === 0) {
         html += `
             <tr>
-                <td colspan="9" style="text-align: center; padding: 40px;">
+                <td colspan="10" style="text-align: center; padding: 40px;">
                     <i class="fas fa-search" style="font-size: 40px; color: #ddd; margin-bottom: 10px; display: block;"></i>
                     Không tìm thấy tỉnh nào phù hợp với từ khóa "<strong>${provinceSearchTerm}</strong>"
                 </td>
@@ -433,7 +436,7 @@ function showProvinceDetailModal(provinceName) {
         totalRevenue += product.doanhThuThuan;
         totalQuantity += product.soLuong;
         
-        const giaTrungBinh = product.soLuong > 0 ? Math.round(product.doanhSoBan / product.soLuong) : 0;
+       
         
         html += `<tr>
             <td>${index + 1}</td>
@@ -442,7 +445,7 @@ function showProvinceDetailModal(provinceName) {
             <td>${formatFullNumber(product.doanhSoBan)}</td>
             <td>${formatFullNumber(product.chietKhau)}</td>
             <td>${formatFullNumber(product.doanhThuThuan)}</td>
-            <td>${formatMoney(giaTrungBinh)}</td>
+           
             <td>${formatNumber(product.npps.size)}</td>
             <td>
                 <button class="apply-btn" onclick="showNPPByProductModal('${provinceName}', '${product.ten.replace(/'/g, "\\'")}')" 
